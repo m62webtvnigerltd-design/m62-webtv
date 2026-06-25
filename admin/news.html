@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV - News Management</title>
+
+<style>
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f4f4;
+    margin:0;
+    padding:40px;
+}
+
+.main-content{
+    max-width:800px;
+    margin:auto;
+}
+
+h1{
+    color:#c0392b;
+    text-align:center;
+}
+
+.news-form{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    margin-bottom:5px;
+    font-weight:bold;
+}
+
+input,
+textarea{
+    width:100%;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:5px;
+    box-sizing:border-box;
+}
+
+button{
+    margin-top:20px;
+    background:#c0392b;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    cursor:pointer;
+    border-radius:5px;
+}
+
+button:hover{
+    background:#a93226;
+}
+
+.back-btn{
+    display:inline-block;
+    margin-bottom:20px;
+    text-decoration:none;
+    color:#c0392b;
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="main-content">
+
+<a href="dashboard.html" class="back-btn">
+← Back To Dashboard
+</a>
+
+<h1>News Management</h1>
+
+<div class="news-form">
+
+<label>News Title</label>
+<input type="text" id="newsTitle" placeholder="Enter News Title">
+
+<label>News Date</label>
+<input type="date" id="newsDate">
+
+<label>Upload Image</label>
+<input type="file" id="newsImage">
+
+<label>News Content</label>
+<textarea id="newsContent" rows="8" placeholder="Write your news here..."></textarea>
+
+<button onclick="publishNews()">
+    Publish News
+</button>
+
+</div>
+
+</div>
+
+<script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV - Comments Moderation</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f4f4;
+    margin:0;
+    padding:40px;
+}
+
+.main-content{
+    max-width:1200px;
+    margin:auto;
+}
+
+h1{
+    color:#c0392b;
+    text-align:center;
+    margin-bottom:24px;
+}
+
+.controls{
+    background:white;
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 0 10px rgba(0,0,0,0.08);
+    display:grid;
+    grid-template-columns:2fr 1fr 2fr 1fr auto auto auto;
+    gap:12px;
+    align-items:end;
+}
+
+.pagination-controls{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.pagination-controls .buttons{
+    display:flex;
+    gap:8px;
+}
+
+.bulk-controls{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.bulk-controls .left,
+.bulk-controls .right{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+#selectedCommentsCount{
+    font-weight:bold;
+    color:#1f2a36;
+}
+
+#moderationPageInfo{
+    font-weight:bold;
+    color:#1f2a36;
+}
+
+label{
+    font-weight:bold;
+    font-size:14px;
+    display:block;
+    margin-bottom:6px;
+}
+
+input,
+select,
+button{
+    width:100%;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    box-sizing:border-box;
+}
+
+button{
+    background:#0d1b2a;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1b263b;
+}
+
+.back-btn{
+    display:inline-block;
+    margin-bottom:20px;
+    color:#c0392b;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    box-shadow:0 0 10px rgba(0,0,0,0.08);
+}
+
+th,
+td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:left;
+    vertical-align:top;
+}
+
+th{
+    background:#c0392b;
+    color:white;
+}
+
+td button{
+    width:auto;
+    margin-right:6px;
+    margin-bottom:6px;
+    padding:8px 10px;
+    font-size:12px;
+}
+
+@media(max-width:900px){
+    .controls{
+        grid-template-columns:1fr;
+    }
+
+    .bulk-controls{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .bulk-controls .left,
+    .bulk-controls .right{
+        flex-wrap:wrap;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="main-content">
+    <a href="dashboard.html" class="back-btn">← Back To Dashboard</a>
+
+    <h1>Comments Moderation</h1>
+
+    <div class="controls">
+        <div>
+            <label for="adminApiKey">Admin API Key</label>
+            <input type="password" id="adminApiKey" placeholder="Enter ADMIN_API_KEY from backend .env">
+        </div>
+
+        <div>
+            <label for="commentStatusFilter">Status</label>
+            <select id="commentStatusFilter">
+                <option value="all">All</option>
+                <option value="visible">Visible only</option>
+                <option value="hidden">Hidden only</option>
+                <option value="archived">Archived only</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="commentSearch">Search</label>
+            <input type="text" id="commentSearch" placeholder="Search name, message, item...">
+        </div>
+
+        <div>
+            <label for="commentPageSize">Page size</label>
+            <select id="commentPageSize">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+        <button type="button" id="saveAdminApiKey">Save Key</button>
+        <button type="button" id="searchComments">Search</button>
+        <button type="button" id="refreshComments">Refresh</button>
+    </div>
+
+    <div class="bulk-controls">
+        <div class="left">
+            <label><input type="checkbox" id="selectAllComments"> Select all on page</label>
+            <span id="selectedCommentsCount">0 selected</span>
+        </div>
+        <div class="right">
+            <select id="bulkAction">
+                <option value="">Bulk action...</option>
+                <option value="hide">Hide</option>
+                <option value="unhide">Unhide</option>
+                <option value="archive">Archive</option>
+                <option value="unarchive">Unarchive</option>
+                <option value="delete">Delete</option>
+            </select>
+            <button type="button" id="applyBulkAction" disabled>Apply</button>
+            <button type="button" id="exportCommentsCsv">Export CSV</button>
+        </div>
+    </div>
+
+    <div class="pagination-controls">
+        <div id="moderationPageInfo">Page 1 of 1</div>
+        <div class="buttons">
+            <button type="button" id="moderationPrev">Previous</button>
+            <button type="button" id="moderationNext">Next</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Select</th>
+                <th>Type</th>
+                <th>Item ID</th>
+                <th>Name</th>
+                <th>Comment</th>
+                <th>Created</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="commentsModerationTable"></tbody>
+    </table>
+</div>
+
+<script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV Videos</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f4f4;
+    margin:0;
+    padding:40px;
+}
+
+.main-content{
+    max-width:900px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    color:#c0392b;
+}
+
+.video-form{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+    margin-bottom:30px;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border:1px solid #ccc;
+    border-radius:5px;
+}
+
+button{
+    margin-top:20px;
+    background:#c0392b;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    cursor:pointer;
+    border-radius:5px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th{
+    background:#c0392b;
+    color:white;
+    padding:12px;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+}
+
+.back-btn{
+    text-decoration:none;
+    color:#c0392b;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="main-content">
+
+<a href="dashboard.html" class="back-btn">← Back To Dashboard</a>
+
+<h1>VIDEO MANAGEMENT</h1>
+
+<div class="video-form">
+
+<label>Video Title</label>
+<input type="text" id="videoTitle" placeholder="Enter Video Title">
+
+<label>YouTube Video Link</label>
+<input type="text" id="videoLink" placeholder="Paste YouTube Video Link">
+
+<label>Upload Thumbnail</label>
+<input type="file" id="videoThumbnail">
+
+<button onclick="publishVideo()">Publish Video</button>
+
+</div>
+
+<h2>Published Videos</h2>
+
+<table>
+<thead>
+<tr>
+<th>Title</th>
+<th>Link</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="videoTable">
+</tbody>
+</table>
+
+</div>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

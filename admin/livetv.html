@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV - Live TV</title>
+
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+
+<div class="main-content">
+
+<a href="dashboard.html" class="back-btn">← Back To Dashboard</a>
+
+<h1>LIVE TV MANAGEMENT</h1>
+
+<div class="news-form">
+
+<label>Live Stream URL</label>
+<input type="text" id="liveUrl" placeholder="Paste YouTube Embed URL">
+
+<label>Live Status</label>
+<select id="liveStatus">
+    <option value="OFFLINE">OFFLINE</option>
+    <option value="LIVE">LIVE</option>
+</select>
+
+<br><br>
+
+<button onclick="saveLiveTV()">Save Live TV</button>
+
+</div>
+
+<h2>Current Live TV</h2>
+
+<table>
+<thead>
+<tr>
+<th>Live URL</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="liveTable"></tbody>
+</table>
+
+</div>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

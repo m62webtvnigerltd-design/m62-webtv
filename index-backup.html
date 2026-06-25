@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html lang="ha">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M62 WEB TV - Niger Media Online | Labarin Niger & Shirye-shirye</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="M62 WEB TV - Tashar talabijin ta yanar gizo domin Niger da duniya. Labarin Niger, shirye-shirye, wasanni, muziki, da ari-ari. Muryar Niger da Al'ummar Niger.">
+    <meta name="keywords" content="Niger, Media, TV, News, Shirye-shirye, Labari, Wasanni, Muziki, M62 WEB TV">
+    <meta name="author" content="PDG MULTIMEDIA TV LTD">
+    <meta name="copyright" content="© 2026 M62 WEB TV">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="Hausa">
+    <meta name="theme-color" content="#008000">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="http://m62webtv.ne">
+    <meta property="og:title" content="M62 WEB TV - Niger Media Online">
+    <meta property="og:description" content="Tashar talabijin ta yanar gizo domin Niger da duniya. Labarin Niger, shirye-shirye, wasanni, da marubucin">
+    <meta property="og:image" content="http://m62webtv.ne/logo.png">
+    <meta property="og:site_name" content="M62 WEB TV">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="http://m62webtv.ne">
+    <meta name="twitter:title" content="M62 WEB TV - Niger Media Online">
+    <meta name="twitter:description" content="Tashar talabijin ta yanar gizo domin Niger da duniya">
+    <meta name="twitter:image" content="http://m62webtv.ne/logo.png">
+    
+    <!-- Canonical -->
+    <link rel="canonical" href="http://m62webtv.ne">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="logo.png">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BroadcastService",
+        "name": "M 62 WEB TV NIGER",
+        "description": "Niger Media Online - Labaran Niger, shirye-shirye, wasanni, muziki",
+        "url": "http://m62webtv.ne",
+        "logo": "http://m62webtv.ne/logo.png",
+        "sameAs": [
+            "https://www.facebook.com/m62webtv",
+            "https://twitter.com/m62webtv",
+            "https://www.youtube.com/m62webtv"
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+          "telephone": "+22776374797"
+            "contactType": "Customer Service",
+            "email": "info@m62webtv.ne"
+        },
+        "areaServed": "NE",
+        "foundingDate": "2026"
+    }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #333;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        body.dark-mode {
+            background: #000;
+            color: #f0f0f0;
+        }
+        
+        /* Dark mode specific styles */
+        body.dark-mode .carousel,
+        body.dark-mode .live-stream,
+        body.dark-mode .news,
+        body.dark-mode .programs,
+        body.dark-mode .video-gallery,
+        body.dark-mode .image-gallery,
+        body.dark-mode .contact-section {
+            background: #1a1a1a;
+            color: #f0f0f0;
+        }
+        
+        body.dark-mode .news-box {
+            background: #262626;
+            color: #f0f0f0;
+        }
+        
+        body.dark-mode .news-box p {
+            color: #ddd;
+        }
+        
+        body.dark-mode .news-date {
+            color: #bbb;
+        }
+        
+        body.dark-mode .program-card {
+            background: #262626;
+            color: #f0f0f0;
+            border-color: #ff9933;
+        }
+        
+        body.dark-mode .program-card:hover {
+            background: #008000;
+        }
+        
+        body.dark-mode .video-item {
+            background: #262626;
+        }
+        
+        body.dark-mode .news-box strong {
+            color: #ffcc00;
+        }
+        
+        body.dark-mode .video-info h3 {
+            color: #ffcc00;
+        }
+        
+        body.dark-mode .video-info p {
+            color: #bbb;
+        }
+        
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group textarea {
+            background: #262626;
+            color: #f0f0f0;
+            border-color: #444;
+        }
+        
+        body.dark-mode .form-group label {
+            color: #ffcc00;
+        }
+        
+        /* Dark mode toggle button */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff6600, #008000);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 999;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        body.dark-mode .theme-toggle {
+            background: linear-gradient(135deg, #ffaa00, #00ff00);
+        }
+        
+        @media (max-width: 768px) {
+            .theme-toggle {
+                bottom: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.3em;
+            }
+        }
+        
+        .logo {
+            width: 150px;
+            height: auto;
+            display: block;
+            margin: auto;
+            margin-bottom: 15px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #008000 0%, #ff6600 50%, #008000 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        header p {
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        
+        .search-bar {
+            max-width: 500px;
+            margin: 15px auto 0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .search-bar button {
+            padding: 10px 20px;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            min-height: 44px;
+        }
+        
+        .search-bar button:hover {
+            background: #ff6600;
+        }
+        
+        nav {
+            background: #000;
+            padding: 15px 10px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.05em;
+            transition: all 0.3s ease;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+        
+        nav a:hover {
+            background: #ff6600;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, #ff6600, #008000);
+            text-align: center;
+            padding: 50px 20px;
+            color: white;
+        }
+        
+        .hero h2 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero p {
+            font-size: 1.2em;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .carousel {
+            background: white;
+            padding: 40px 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        .carousel h2 {
+            color: #008000;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .carousel-slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-size: cover;
+            background-position: center;
+            animation: fadeIn 0.5s;
+        }
+        
+        .carousel-slide.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .carousel-overlay {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 30px 20px;
+            font-size: 1.2em;
+        }
+        
+        .carousel-controls {
+            position: absolute;
+            width: 100%;
+            bottom: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .carousel-btn {
+            background: rgba(255,255,255,0.7);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .carousel-btn:hover {
+            background: #ff6600;
+            color: white;
+        }
+        
+        /* LIVE STREAM */
+        .live-stream {
+            background: white;
+            padding: 40px 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        .live-stream h2 {
+            color: #008000;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 10px;
+            background: #000;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .live-badge {
+            display: inline-block;
+            background: #ff0000;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* NEWS SECTION */
+        .news {
+            background: white;
+            padding: 40px 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        .news h2 {
+            color: #008000;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .news-box {
+            background: white;
+            padding: 20px;
+            border-left: 5px solid #008000;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .news-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        
+        .news-box strong {
+            color: #008000;
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .news-box p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .news-date {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 10px;
+        }
+        
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .share-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .share-facebook {
+            background: #1877F2;
+            color: white;
+        }
+        
+        .share-facebook:hover {
+            background: #0a66c2;
+            transform: translateY(-2px);
+        }
+        
+        .share-twitter {
+            background: #1DA1F2;
+            color: white;
+        }
+        
+        .share-twitter:hover {
+            background: #1a8cd8;
+            transform: translateY(-2px);
+        }
+        
+        .share-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+        
+        .share-whatsapp:hover {
+            background: #1fa857;
+            transform: translateY(-2px);
+        }
+        
+        .share-copy {
+            background: #666;
+            color: white;
+        }
+        
+        .share-copy:hover {
+            background: #555;
+            transform: translateY(-2px);
+        }
+        
+        /* PROGRAMS SECTION */
+        .programs {
+            background: white;
+            padding: 40px 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        .programs h2 {
+            color: #008000;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .program-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .program-card {
+            background: #f9f9f9;
+            border: 2px solid #ff6600;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        
+        .program-card:hover {
+            background: #008000;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .program-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .program-time {
+            background: #ff6600;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        /* VIDEO GALLERY */
+        .video-gallery {
+            background: white;
+            padding: 40px 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        .video-gallery h2 {
+            color: #008000;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .video-item {
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 240px;
+        }
+        
+        .video-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        
+        .video-thumbnail {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #008000, #ff6600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+        }
+        
+        .video-info {
+            padding: 15px;
+        }
+        
+        .video-info h3 {
+            color: #008000;
+            margin-bottom: 5px;
+        }
+        
+        .video-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        /* IMAGE GALLERY */
+        .image-gallery {
+            background: white;
+            padding: 40px 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        .image-gallery h2 {
+            color: #008000;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 220px;
+        }
+        
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .gallery-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #ff6600, #008000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover .gallery-image {
+            transform: scale(1.1);
+        }
+        
+        .gallery-caption {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 20px 10px 10px;
+            font-size: 0.9em;
+        }
+        
+        /* LIGHTBOX MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: zoomIn 0.3s;
+        }
+        
+        @keyframes zoomIn {
+            from { 
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to { 
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .modal-img, .modal-video {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        
+        .modal-video {
+            width: 90vw;
+            height: auto;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 2em;
+            color: white;
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: 0.3s;
+            z-index: 2001;
+        }
+        
+        .modal-close:hover {
+            color: #ff6600;
+            transform: scale(1.2);
+        }
+        
+        .modal-caption {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2em;
+            max-width: 80%;
+        }
+        
+        .modal-nav {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .modal-nav button {
+            background: rgba(255,102,0,0.8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            min-height: 44px;
+        }
+        
+        .modal-nav button:hover {
+            background: #ff6600;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-close {
+                top: 10px;
+                right: 15px;
+                font-size: 1.5em;
+            }
+            
+            .modal-img, .modal-video {
+                max-height: 60vh;
+            }
+            
+            .modal-nav {
+                bottom: 10px;
+            }
+            
+            .modal-nav button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+            
+            .modal-caption {
+                font-size: 1em;
+            }
+        }
+        
+        /* CONTACT FORM */
+        .contact-section {
+            background: white;
+            padding: 40px 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        .contact-section h2 {
+            color: #008000;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .contact-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .contact-item {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .contact-item-icon {
+            font-size: 2em;
+            min-width: 50px;
+        }
+        
+        .contact-item-content h3 {
+            color: #008000;
+            margin-bottom: 5px;
+        }
+        
+        .contact-item-content p {
+            color: #666;
+        }
+        
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            color: #008000;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 1em;
+            transition: 0.3s;
+            min-height: 44px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #008000;
+            box-shadow: 0 0 5px rgba(0,128,0,0.3);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-submit {
+            background: linear-gradient(135deg, #008000, #ff6600);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 44px;
+        }
+        
+        .form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .form-message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+        
+        .form-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .form-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        /* COMMENTS & RATINGS SECTION */
+        .comments-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        body.dark-mode .comments-section {
+            background: #222;
+        }
+        
+        .comments-section h4 {
+            color: #008000;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .comment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        body.dark-mode .comment-form {
+            background: #1a1a1a;
+        }
+        
+        .comment-form input, .comment-form textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9em;
+        }
+        
+        body.dark-mode .comment-form input, 
+        body.dark-mode .comment-form textarea {
+            background: #333;
+            color: #fff;
+            border-color: #555;
+        }
+        
+        .comment-form textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .comment-form button {
+            background: #008000;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-height: 40px;
+        }
+        
+        .comment-form button:hover {
+            background: #ff6600;
+        }
+        
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .comment-item {
+            background: white;
+            padding: 10px;
+            border-left: 4px solid #008000;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        body.dark-mode .comment-item {
+            background: #1a1a1a;
+            border-left-color: #ff6600;
+        }
+        
+        .comment-author {
+            font-weight: bold;
+            color: #008000;
+            margin-bottom: 5px;
+        }
+        
+        .comment-text {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        body.dark-mode .comment-text {
+            color: #ddd;
+        }
+        
+        .comment-date {
+            font-size: 0.8em;
+            color: #999;
+        }
+        
+        /* LIKE BUTTONS */
+        .like-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        
+        .like-btn {
+            background: #ff6600;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 36px;
+        }
+        
+        .like-btn:hover {
+            background: #008000;
+            transform: scale(1.05);
+        }
+        
+        .like-btn.liked {
+            background: #008000;
+        }
+        
+        .like-count {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        body.dark-mode .like-count {
+            color: #aaa;
+        }
+        
+        /* STAR RATING */
+        .rating-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .star-rating {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .star {
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+            filter: grayscale(100%);
+        }
+        
+        .star:hover, .star.active {
+            filter: grayscale(0%);
+            transform: scale(1.2);
+        }
+        
+        .rating-text {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: bold;
+        }
+        
+        body.dark-mode .rating-text {
+            color: #aaa;
+        }
+        
+        @media (max-width: 768px) {
+            .comment-form {
+                flex-direction: column;
+            }
+            
+            .like-section {
+                flex-wrap: wrap;
+            }
+            
+            .rating-section {
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* FOOTER */
+        footer {
+            background: #000;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 40px;
+            border-top: 3px solid #008000;
+        }
+        
+        footer p {
+            margin-bottom: 10px;
+        }
+        
+        .newsletter-section {
+            background: linear-gradient(135deg, #008000, #ff6600);
+            padding: 30px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+        
+        .newsletter-section h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .newsletter-form {
+            display: flex;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .newsletter-form input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+        
+        .newsletter-form button {
+            background: #000;
+            color: #ff6600;
+            border: 2px solid #ff6600;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-height: 44px;
+        }
+        
+        .newsletter-form button:hover {
+            background: #ff6600;
+            color: #000;
+        }
+        
+        .newsletter-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            text-align: center;
+        }
+        
+        .newsletter-message.success {
+            background: rgba(0,255,0,0.3);
+            color: #fff;
+            display: block;
+        }
+        
+        .newsletter-message.error {
+            background: rgba(255,0,0,0.3);
+            color: #fff;
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .newsletter-form {
+                flex-direction: column;
+            }
+            
+            .newsletter-form input {
+                min-width: 100%;
+            }
+        }
+        
+        /* MOBILE MENU */
+        .hamburger-menu {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 10px;
+            margin-right: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            
+            .hamburger-menu {
+                display: block;
+            }
+            
+            nav {
+                display: none;
+                gap: 0;
+                flex-direction: column;
+                padding: 0;
+                background: #000;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                z-index: 1000;
+            }
+            
+            nav.active {
+                display: flex;
+            }
+            
+            nav a {
+                font-size: 0.9em;
+                margin: 0;
+                border-bottom: 1px solid #333;
+                border-radius: 0;
+                padding: 15px 20px;
+                transition: all 0.3s;
+            }
+            
+            nav a:hover {
+                padding-left: 25px;
+                background: #ff6600;
+            }
+            
+            .hero h2 {
+                font-size: 1.8em;
+            }
+            
+            .carousel-container {
+                height: 250px;
+            }
+            
+            .contact-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+            
+            .search-bar input,
+            .search-bar button {
+                width: 100%;
+            }
+            
+            header p {
+                font-size: 1em;
+            }
+            
+            .news-grid,
+            .program-grid,
+            .video-grid,
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .carousel h2,
+            .live-stream h2,
+            .news h2,
+            .programs h2,
+            .video-gallery h2,
+            .image-gallery h2,
+            .contact-section h2 {
+                font-size: 1.5em;
+            }
+            
+            .carousel-controls {
+                bottom: 5px;
+                gap: 5px;
+            }
+            
+            .carousel-btn {
+                padding: 6px 12px;
+                font-size: 0.9em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 20px 10px;
+            }
+            
+            header h1 {
+                font-size: 1.5em;
+            }
+            
+            .logo {
+                width: 100px;
+            }
+            
+            .hero {
+                padding: 30px 15px;
+            }
+            
+            .hero h2 {
+                font-size: 1.3em;
+            }
+            
+            .carousel-container {
+                height: 200px;
+            }
+            
+            .carousel-overlay {
+                padding: 15px 10px;
+                font-size: 0.9em;
+            }
+            
+            .live-badge {
+                padding: 3px 10px;
+                font-size: 0.8em;
+            }
+            
+            .form-group input,
+            .form-group textarea {
+                font-size: 16px;
+            }
+            
+            .contact-item-icon {
+                font-size: 1.5em;
+                min-width: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <button class="hamburger-menu" id="hamburgerBtn" onclick="toggleMobileMenu()">☰</button>
+        <img src="logo.png" alt="M62 WEB TV Logo" class="logo">
+        <h1>📺 M62 WEB TV</h1>
+        <p>Muryar Niger Da Al'ummar Niger 🇳🇪</p>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="🔍 Nema labari..." />
+            <button onclick="searchNews()">Nema</button>
+        </div>
+    </header>
+
+    <nav id="mainNav">
+        <a href="#carousel">⭐ Fitattun</a>
+        <a href="#live">📡 Live TV</a>
+        <a href="#labarai">📰 Labarai</a>
+        <a href="#programs">📺 Shirye-shirye</a>
+        <a href="#videos">🎬 Talabiji</a>
+        <a href="#gallery">📸 Hotuna</a>
+        <a href="#contact">📞 Tuntube Mu</a>
+    </nav>
+
+    <section class="hero">
+        <h2>Barka da Zuwa M62 WEB TV</h2>
+        <p>🌍 Tashar Talabijin ta Yanar Gizo Domin Niger Da Duniya</p>
+    </section>
+
+    <div class="container">
+        <!-- CAROUSEL SECTION -->
+        <section class="carousel" id="carousel">
+            <h2>⭐ Fitattun Labarai</h2>
+            <div class="carousel-container">
+                <div class="carousel-slide active" style="background: linear-gradient(135deg, #ff6600, #008000);">
+                    <div class="carousel-overlay">
+                        🔴 Labari na Farko - Sabuwar Abubuwan Niger
+                    </div>
+                </div>
+                <div class="carousel-slide" style="background: linear-gradient(135deg, #008000, #ff6600);">
+                    <div class="carousel-overlay">
+                        🟡 Sautin Jama'a - Abubuwan Kakakin Gari
+                    </div>
+                </div>
+                <div class="carousel-slide" style="background: linear-gradient(135deg, #ff6600, #008000);">
+                    <div class="carousel-overlay">
+                        🟢 Wasanni - Sakamakon Wasanni Niger
+                    </div>
+                </div>
+                <div class="carousel-controls">
+                    <button class="carousel-btn" onclick="prevSlide()">⬅️ Baya</button>
+                    <button class="carousel-btn" onclick="nextSlide()">Gaba ➡️</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- LIVE STREAM SECTION -->
+        <section class="live-stream" id="live">
+            <div class="live-badge">🔴 LIVE</div>
+            <h2>📡 Kalli Live TV</h2>
+            <div class="video-container">
+              <iframe
+id="homeLiveTV"
+width="100%"
+height="500"
+src=""
+title="M62 WEB TV Live"
+frameborder="0"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+allowfullscreen>
+</iframe>
+            </div>
+            <p style="text-align: center; color: #666; margin-top: 15px;">Kalli talabiji na M62 WEB TV a layin kai tsaye. Samun sabuwar labari da shirye-shirye kowane rana.</p>
+        </section>
+
+        <!-- NEWS SECTION -->
+        <section class="news" id="labarai">
+            <h2>📰 Manyan Labarai</h2>
+            <div class="news-grid" id="newsGrid">
+                <div class="news-box">
+                    <div>
+                        <strong>🔴 Labari na Farko</strong>
+                        <p>Labari mai muhimmanci na yanzu. Wannan shine muhimmancin abubuwan da suka faru a Niger jiya...</p>
+                        <div class="news-date">📅 9 Yunis, 2026</div>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="share-btn share-facebook" onclick="shareNews('facebook', 'Labari na Farko')">📘 Share</button>
+                        <button class="share-btn share-whatsapp" onclick="shareNews('whatsapp', 'Labari na Farko')">💬 Share</button>
+                        <button class="share-btn share-copy" onclick="shareNews('copy', 'Labari na Farko')">🔗 Copy</button>
+                    </div>
+                </div>
+
+                <div class="news-box">
+                    <div>
+                        <strong>🟡 Labari na Biyu</strong>
+                        <p>Sabuwar shirye-shirye da takaita da aka tsara domin masu jin sautin jiya. Abubuwa mai dadi...</p>
+                        <div class="news-date">📅 8 Yunis, 2026</div>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="share-btn share-facebook" onclick="shareNews('facebook', 'Labari na Biyu')">📘 Share</button>
+                        <button class="share-btn share-whatsapp" onclick="shareNews('whatsapp', 'Labari na Biyu')">💬 Share</button>
+                        <button class="share-btn share-copy" onclick="shareNews('copy', 'Labari na Biyu')">🔗 Copy</button>
+                    </div>
+                </div>
+
+                <div class="news-box">
+                    <div>
+                        <strong>🟢 Labari na Uku</strong>
+                        <p>Abubuwan sarayar taron kakakin kakakin gari. Sautin jama'a game da abubuwan saukarau...</p>
+                        <div class="news-date">📅 7 Yunis, 2026</div>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="share-btn share-facebook" onclick="shareNews('facebook', 'Labari na Uku')">📘 Share</button>
+                        <button class="share-btn share-whatsapp" onclick="shareNews('whatsapp', 'Labari na Uku')">💬 Share</button>
+                        <button class="share-btn share-copy" onclick="shareNews('copy', 'Labari na Uku')">🔗 Copy</button>
+                    </div>
+                </div>
+
+                <div class="news-box">
+                    <div>
+                        <strong>🔵 Labari na Hudu</strong>
+                        <p>Bakin sakamakon wasa na Niger. Kawai mun buge abokan kasuwa a gaida ko... Labari na saurin zaiyi!</p>
+                        <div class="news-date">📅 6 Yunis, 2026</div>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="share-btn share-facebook" onclick="shareNews('facebook', 'Labari na Hudu')">📘 Share</button>
+                        <button class="share-btn share-whatsapp" onclick="shareNews('whatsapp', 'Labari na Hudu')">💬 Share</button>
+                        <button class="share-btn share-copy" onclick="shareNews('copy', 'Labari na Hudu')">🔗 Copy</button>
+                    </div>
+                </div>
+
+                <div class="news-box">
+                    <div>
+                        <strong>⚫ Labari na Biyar</strong>
+                        <p>Sabuwar abubuwan jiya da jiya. Abubuwan da suka faru a gida da kuma a kaje gida...</p>
+                        <div class="news-date">📅 5 Yunis, 2026</div>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="share-btn share-facebook" onclick="shareNews('facebook', 'Labari na Biyar')">📘 Share</button>
+                        <button class="share-btn share-whatsapp" onclick="shareNews('whatsapp', 'Labari na Biyar')">💬 Share</button>
+                        <button class="share-btn share-copy" onclick="shareNews('copy', 'Labari na Biyar')">🔗 Copy</button>
+                    </div>
+                </div>
+
+                <div class="news-box">
+                    <div>
+                        <strong>⚪ Labari na Jiya</strong>
+                        <p>Abubuwan gari da sakamakon. Tattalin arzikin gari da kuma abubuwan kowane taimakon yanzu...</p>
+                        <div class="news-date">📅 4 Yunis, 2026</div>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="share-btn share-facebook" onclick="shareNews('facebook', 'Labari na Jiya')">📘 Share</button>
+                        <button class="share-btn share-whatsapp" onclick="shareNews('whatsapp', 'Labari na Jiya')">💬 Share</button>
+                        <button class="share-btn share-copy" onclick="shareNews('copy', 'Labari na Jiya')">🔗 Copy</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROGRAMS SECTION -->
+        <section class="programs" id="programs">
+            <h2>📺 Shirye-shirye</h2>
+            <div class="program-grid">
+                <div class="program-card">
+                    <h3>🎤 Labarin Gari</h3>
+                    <p>Sabuwar labari na rana.</p>
+                    <span class="program-time">⏰ 09:00 - 10:30</span>
+                </div>
+
+                <div class="program-card">
+                    <h3>🎬 Sinima Niger</h3>
+                    <p>Fitattun talabiji daga Niger.</p>
+                    <span class="program-time">⏰ 12:00 - 14:30</span>
+                </div>
+
+                <div class="program-card">
+                    <h3>⚽ Wasanni</h3>
+                    <p>Sakamakon wasanni da takaitai.</p>
+                    <span class="program-time">⏰ 16:00 - 17:30</span>
+                </div>
+
+                <div class="program-card">
+                    <h3>🎵 Wakoki</h3>
+                    <p>Fitattun wakoki da sautin Niger.</p>
+                    <span class="program-time">⏰ 18:00 - 19:30</span>
+                </div>
+
+                <div class="program-card">
+                    <h3>📚 Karatu</h3>
+                    <p>Talabiji kan ilimi da karatun jama'a.</p>
+                    <span class="program-time">⏰ 20:00 - 20:30</span>
+                </div>
+
+                <div class="program-card">
+                    <h3>🌙 Yamma</h3>
+                    <p>Talabiji na cikin yamma.</p>
+                    <span class="program-time">⏰ 21:00 - 22:30</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIDEO GALLERY -->
+        <section class="video-gallery" id="videos">
+            <h2>🎬 Jerin Talabiji</h2>
+            <div class="video-grid" id="videoGrid">
+                <div class="video-item" onclick="openVideoModal(0)">
+                    <div class="video-thumbnail">🎬</div>
+                    <div class="video-info">
+                        <h3>Labari na Farko</h3>
+                        <p>5 Mins Jiya</p>
+                    </div>
+                </div>
+
+                <div class="video-item" onclick="openVideoModal(1)">
+                    <div class="video-thumbnail">🎥</div>
+                    <div class="video-info">
+                        <h3>Shirye-shirye Niger</h3>
+                        <p>10 Mins Jiya</p>
+                    </div>
+                </div>
+
+                <div class="video-item" onclick="openVideoModal(2)">
+                    <div class="video-thumbnail">📺</div>
+                    <div class="video-info">
+                        <h3>Sautin Jama'a</h3>
+                        <p>15 Mins Jiya</p>
+                    </div>
+                </div>
+
+                <div class="video-item" onclick="openVideoModal(3)">
+                    <div class="video-thumbnail">🎞️</div>
+                    <div class="video-info">
+                        <h3>Wakokin Niger</h3>
+                        <p>20 Mins Jiya</p>
+                    </div>
+                </div>
+
+                <div class="video-item" onclick="openVideoModal(4)">
+                    <div class="video-thumbnail">🎭</div>
+                    <div class="video-info">
+                        <h3>Alubarbar Niger</h3>
+                        <p>25 Mins Jiya</p>
+                    </div>
+                </div>
+
+                <div class="video-item" onclick="openVideoModal(5)">
+                    <div class="video-thumbnail">🌟</div>
+                    <div class="video-info">
+                        <h3>Wasanni da Wasa</h3>
+                        <p>30 Mins Jiya</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- IMAGE GALLERY -->
+        <section class="image-gallery" id="gallery">
+            <h2>📸 Jerin Hotuna</h2>
+            <div class="gallery-grid" id="galleryGrid">
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">📸</div>
+                    <div class="gallery-caption">Abubuwan Niger - Hotuna 1</div>
+                </div>
+
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">🖼️</div>
+                    <div class="gallery-caption">Wasanni Niger - Hotuna 2</div>
+                </div>
+
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">🎪</div>
+                    <div class="gallery-caption">Alubarbar - Hotuna 3</div>
+                </div>
+
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">🏆</div>
+                    <div class="gallery-caption">Gaggawa Niger - Hotuna 4</div>
+                </div>
+
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">🎉</div>
+                    <div class="gallery-caption">Guguwa Gari - Hotuna 5</div>
+                </div>
+
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">🌟</div>
+                    <div class="gallery-caption">Fitattun Abubuwa - Hotuna 6</div>
+                </div>
+
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">📷</div>
+                    <div class="gallery-caption">Galadima Niger - Hotuna 7</div>
+                </div>
+
+                <div class="gallery-item" onclick="openImageModal(this)">
+                    <div class="gallery-image">🎬</div>
+                    <div class="gallery-caption">Talabiji - Hotuna 8</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTACT SECTION -->
+        <section class="contact-section" id="contact">
+            <h2>📞 Tuntube Mu</h2>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <div class="contact-item-icon">📍</div>
+                        <div class="contact-item-content">
+                            <h3>Adireshin</h3>
+                            <p>Niamey, Niger 🇳🇪</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-item">
+                        <div class="contact-item-icon">📞</div>
+                        <div class="contact-item-content">
+                            <h3>Tarowa</h3>
+                            <p>+227 XX XXX XXXX<br>+227 XX XXX XXXX</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-item">
+                        <div class="contact-item-icon">📧</div>
+                        <div class="contact-item-content">
+                            <h3>Email</h3>
+                            <p>info@m62webtv.ne<br>contact@m62webtv.ne</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-item">
+                        <div class="contact-item-icon">🕐</div>
+                        <div class="contact-item-content">
+                            <h3>Lokacin Aiki</h3>
+                            <p>Jiya - Juma'a: 08:00 - 22:00<br>Asabba: 10:00 - 20:00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form class="contact-form" onsubmit="submitForm(event)">
+                    <div class="form-group">
+                        <label for="name">Sunanka *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Tarowa</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Jiya *</label>
+                        <input type="text" id="subject" name="subject" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Saƙonka *</label>
+                        <textarea id="message" name="message" required></textarea>
+                    </div>
+
+                    <button type="submit" class="form-submit">Aika Saƙo 📨</button>
+                    <div id="formMessage" class="form-message"></div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <!-- NEWSLETTER SECTION -->
+    <div class="container">
+        <div class="newsletter-section">
+            <h3>📧 Yi Ibada ga Labarin Sabuwa!</h3>
+            <p>Karantarwa da labarin sabuwa kowane rana tsakanin ku karantarwa.</p>
+            <form class="newsletter-form" onsubmit="subscribeNewsletter(event)">
+                <input type="email" id="newsletterEmail" placeholder="Email adireshi..." required>
+                <button type="submit">Yi ibada ✉️</button>
+                <div id="newsletterMessage" class="newsletter-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- IMAGE MODAL -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeImageModal()">✕</button>
+            <div id="imageModalBody"></div>
+            <div class="modal-caption" id="imageCaption"></div>
+            <div class="modal-nav">
+                <button onclick="prevImage()">⬅️ Baya</button>
+                <button onclick="nextImage()">Gaba ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIDEO MODAL -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeVideoModal()">✕</button>
+            <video id="videoPlayer" class="modal-video" controls>
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="modal-caption" id="videoCaption"></div>
+            <div class="modal-nav">
+                <button onclick="prevVideo()">⬅️ Baya</button>
+                <button onclick="nextVideo()">Gaba ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>© 2026 M62 WEB TV | PDG MULTIMEDIA TV LTD</strong></p>
+        <p>📞 Tuntube Mu: +227 XX XXX XXXX | 📧 info@m62webtv.ne</p>
+        <div style="margin: 15px 0;">
+            <a href="about.html">📄 Dangane Da Mu</a> | 
+            <a href="faq.html">❓ FAQ</a> | 
+            <a href="privacy.html">📋 Sirrin Bayarwa</a>
+        </div>
+        <div class="social-links">
+            <a href="#" target="_blank">📘 Facebook</a> | 
+            <a href="#" target="_blank">🐦 Twitter</a> | 
+            <a href="#" target="_blank">💬 WhatsApp</a> | 
+            <a href="#" target="_blank">📺 YouTube</a>
+        </div>
+        <p style="margin-top: 15px; font-size: 0.9em;">Muryar Niger Da Al'ummar Niger 🇳🇪</p>
+    </footer>
+
+    <!-- Dark Mode Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+
+    <script>
+        // DARK MODE FUNCTIONALITY
+        function toggleDarkMode() {
+            const body = document.body;
+            const toggle = document.getElementById('themeToggle');
+            
+            body.classList.toggle('dark-mode');
+            
+            // Update button text
+            if (body.classList.contains('dark-mode')) {
+                toggle.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                toggle.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Load saved theme on page load
+        window.addEventListener('load', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const toggle = document.getElementById('themeToggle');
+            
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                toggle.textContent = '☀️';
+            } else {
+                toggle.textContent = '🌙';
+            }
+        });
+        
+        // CAROUSEL FUNCTIONALITY
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Auto rotate carousel every 5 seconds
+        setInterval(nextSlide, 5000);
+
+        // MOBILE MENU TOGGLE
+        function toggleMobileMenu() {
+            const nav = document.getElementById('mainNav');
+            const hamburger = document.getElementById('hamburgerBtn');
+            nav.classList.toggle('active');
+            hamburger.textContent = nav.classList.contains('active') ? '✕' : '☰';
+        }
+        
+        // Close menu when link is clicked
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('mainNav').classList.remove('active');
+                document.getElementById('hamburgerBtn').textContent = '☰';
+            });
+        });
+        
+        // SOCIAL SHARING FUNCTIONALITY
+        function shareNews(platform, title) {
+            const url = window.location.href;
+            const text = `Check out this news on M62 WEB TV: ${title}`;
+            
+            if (platform === 'facebook') {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'width=600,height=400');
+            } else if (platform === 'twitter') {
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=400');
+            } else if (platform === 'whatsapp') {
+                window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+            } else if (platform === 'copy') {
+                navigator.clipboard.writeText(url);
+                alert('Link copied to clipboard! ✅');
+            }
+        }
+        
+        // NEWSLETTER SUBSCRIPTION
+        function subscribeNewsletter(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('newsletterEmail').value;
+            const messageDiv = document.getElementById('newsletterMessage');
+            
+            // Validate email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                messageDiv.className = 'newsletter-message error';
+                messageDiv.textContent = 'Email adireshi ba ta dace ba ❌';
+                return;
+            }
+            
+            // Save to localStorage (since we might not have backend)
+            let subscribers = JSON.parse(localStorage.getItem('m62_subscribers')) || [];
+            
+            if (subscribers.includes(email)) {
+                messageDiv.className = 'newsletter-message error';
+                messageDiv.textContent = 'Ka dai an yi ibada ta wannan email ✅';
+                return;
+            }
+            
+            subscribers.push(email);
+            localStorage.setItem('m62_subscribers', JSON.stringify(subscribers));
+            
+            messageDiv.className = 'newsletter-message success';
+            messageDiv.textContent = 'Godiya! An yi ibada da nasara! 🎉 Zaka gani labarin sabuwa a email ka.';
+            
+            document.getElementById('newsletterEmail').value = '';
+            
+            // Hide message after 4 seconds
+            setTimeout(() => {
+                messageDiv.className = 'newsletter-message';
+            }, 4000);
+        }
+        
+        // SEARCH FUNCTIONALITY
+        function searchNews() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const newsBoxes = document.querySelectorAll('.news-box');
+            
+            newsBoxes.forEach(box => {
+                const text = box.textContent.toLowerCase();
+                if (text.includes(searchTerm) || searchTerm === '') {
+                    box.style.display = 'block';
+                } else {
+                    box.style.display = 'none';
+                }
+            });
+        }
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchNews();
+            }
+        });
+
+        // CONTACT FORM FUNCTIONALITY
+        function submitForm(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+            
+            // Basic validation
+            if (!name || !email || !subject || !message) {
+                showMessage('Tabbatar da cewa kaka ka cika duka filayen da suke nuni! ❌', 'error');
+                return;
+            }
+            
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('Tabbatar da cewa email ka dace! ❌', 'error');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = event.target.querySelector('.form-submit');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Ana aika... ⏳';
+            submitBtn.disabled = true;
+            
+            // Send to backend
+            const formData = { name, email, phone, subject, message };
+            
+            fetch('http://localhost:3000/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Saƙonka ya aika da nasara! Godiya! ✅', 'success');
+                    document.querySelector('.contact-form').reset();
+                    
+                    // Hide message after 3 seconds
+                    setTimeout(() => {
+                        document.getElementById('formMessage').style.display = 'none';
+                    }, 3000);
+                } else {
+                    showMessage(data.message || 'Jiya, saƙo na bugi! ❌', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Server connection error. Please try again later. ❌', 'error');
+            })
+            .finally(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('formMessage');
+            messageDiv.textContent = text;
+            messageDiv.className = `form-message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({behavior: 'smooth'});
+                }
+            });
+        });
+
+        // GALLERY MODAL FUNCTIONALITY
+        let currentImageIndex = 0;
+        let currentVideoIndex = 0;
+        const galleryItems = document.querySelectorAll('#galleryGrid .gallery-item');
+        const videoItems = document.querySelectorAll('#videoGrid .video-item');
+        const videoData = [
+            { title: 'Labari na Farko', url: 'videos/news1.mp4' },
+            { title: 'Shirye-shirye Niger', url: 'videos/program1.mp4' },
+            { title: 'Sautin Jama\'a', url: 'videos/voice.mp4' },
+            { title: 'Wakokin Niger', url: 'videos/music1.mp4' },
+            { title: 'Alubarbar Niger', url: 'videos/drama.mp4' },
+            { title: 'Wasanni da Wasa', url: 'videos/sports.mp4' }
+        ];
+
+        function openImageModal(element) {
+            currentImageIndex = Array.from(galleryItems).indexOf(element);
+            displayImage();
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        function displayImage() {
+            const item = galleryItems[currentImageIndex];
+            const caption = item.querySelector('.gallery-caption').textContent;
+            const emoji = item.querySelector('.gallery-image').textContent;
+            
+            let imageBody = `<div style="font-size: 150px; margin: 20px;">${emoji}</div>`;
+            document.getElementById('imageModalBody').innerHTML = imageBody;
+            document.getElementById('imageCaption').textContent = caption;
+        }
+
+        function nextImage() {
+            currentImageIndex = (currentImageIndex + 1) % galleryItems.length;
+            displayImage();
+        }
+
+        function prevImage() {
+            currentImageIndex = (currentImageIndex - 1 + galleryItems.length) % galleryItems.length;
+            displayImage();
+        }
+
+        function openVideoModal(index) {
+            currentVideoIndex = index;
+            const video = videoData[index];
+            document.getElementById('videoPlayer').src = video.url;
+            document.getElementById('videoCaption').textContent = video.title;
+            document.getElementById('videoModal').classList.add('active');
+        }
+
+        function closeVideoModal() {
+            document.getElementById('videoModal').classList.remove('active');
+            document.getElementById('videoPlayer').pause();
+        }
+
+        function nextVideo() {
+            currentVideoIndex = (currentVideoIndex + 1) % videoData.length;
+            openVideoModal(currentVideoIndex);
+        }
+
+        function prevVideo() {
+            currentVideoIndex = (currentVideoIndex - 1 + videoData.length) % videoData.length;
+            openVideoModal(currentVideoIndex);
+        }
+
+        // Close modals when clicking outside content
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) closeImageModal();
+        });
+
+        document.getElementById('videoModal').addEventListener('click', function(e) {
+            if (e.target === this) closeVideoModal();
+        });
+
+        // Keyboard navigation for modals
+        document.addEventListener('keydown', function(e) {
+            const imageModalOpen = document.getElementById('imageModal').classList.contains('active');
+            const videoModalOpen = document.getElementById('videoModal').classList.contains('active');
+            
+            if (imageModalOpen) {
+                if (e.key === 'ArrowRight') nextImage();
+                if (e.key === 'ArrowLeft') prevImage();
+                if (e.key === 'Escape') closeImageModal();
+            } else if (videoModalOpen) {
+                if (e.key === 'ArrowRight') nextVideo();
+                if (e.key === 'ArrowLeft') prevVideo();
+                if (e.key === 'Escape') closeVideoModal();
+            }
+        });
+    </script>
+</body>
+</html>                                                                                                                                                                                           <section>
+   <h2>🔴 LIVE TV</h2>
+   <p>M62 WEB TV Live Stream</p>
+</section>

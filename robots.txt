@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /about.html
+Allow: /faq.html
+Allow: /privacy.html
+Allow: /sitemap.xml
+Disallow: /admin/
+Disallow: /private/
+Disallow: /*.pdf$
+Disallow: /*.docx$
+
+# Specific search engine rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Slowdown aggressive crawlers
+User-agent: MJ12bot
+Crawl-delay: 10
+
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+# Sitemap location
+Sitemap: http://m62webtv.ne/sitemap.xml

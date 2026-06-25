@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV Admin Dashboard</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+display:flex;
+background:#f4f4f4;
+}
+
+.sidebar{
+width:270px;
+height:100vh;
+background:#021d3a;
+color:white;
+position:fixed;
+}
+
+.logo{
+text-align:center;
+padding:30px;
+font-size:32px;
+}
+
+.sidebar ul{
+list-style:none;
+}
+
+.sidebar ul li{
+border-top:1px solid rgba(255,255,255,.1);
+}
+
+.sidebar ul li a{
+display:block;
+padding:20px;
+color:white;
+text-decoration:none;
+font-size:22px;
+}
+
+.sidebar ul li a:hover{
+background:#0b2d57;
+}
+
+.main-content{
+margin-left:270px;
+width:100%;
+padding:40px;
+}
+
+.main-content h1{
+text-align:center;
+color:#c0392b;
+margin-bottom:40px;
+font-size:48px;
+}
+
+.cards{
+display:flex;
+justify-content:center;
+gap:30px;
+flex-wrap:wrap;
+}
+
+.card{
+background:white;
+width:280px;
+height:180px;
+border-radius:15px;
+text-align:center;
+padding-top:30px;
+box-shadow:0 0 10px rgba(0,0,0,.1);
+}
+
+.card h2{
+margin-bottom:20px;
+}
+
+.card p{
+font-size:60px;
+font-weight:bold;
+color:#c0392b;
+}
+
+.news-table{
+margin-top:50px;
+}
+
+.news-table h2{
+margin-bottom:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th{
+background:#c0392b;
+color:white;
+padding:15px;
+}
+
+td{
+padding:15px;
+border:1px solid #ddd;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<div class="logo">
+📺
+<h2>M62 WEB TV</h2>
+</div>
+
+<ul>
+<li><a href="dashboard.html">🏠 Dashboard</a></li>
+<li><a href="news.html">📰 News Management</a></li>
+<li><a href="videos.html">🎥 Videos</a></li>
+<li><a href="livetv.html">📡 Live TV</a></li>
+<li><a href="comments.html">💬 Comments</a></li>
+<li><a href="statistics.html">📊 Statistics</a></li>
+<li><a href="users.html">👥 Users</a></li>
+<li><a href="settings.html">⚙ Settings</a></li>
+</ul>
+
+</div>
+
+<div class="main-content">
+
+<h1>M62 WEB TV ADMIN DASHBOARD</h1>
+
+<div class="cards">
+
+<div class="card">
+<h2>Total News</h2>
+<p id="totalNews">0</p>
+</div>
+
+<div class="card">
+<h2>Total Videos</h2>
+<p>0</p>
+</div>
+
+<div class="card">
+<h2>Visitors</h2>
+<p>0</p>
+</div>
+
+</div>
+
+<div class="news-table">
+
+<h2>Latest News</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>Title</th>
+<th>Date</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="latestNews">
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script src="../js/main.js"></script>
+
+</body>
+</html>

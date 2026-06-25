@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ha">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - M62 WEB TV</title>
+    <meta name="description" content="Ajiyar jiyoyin da aka sani a M62 WEB TV">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #333;
+        }
+        
+        body.dark-mode {
+            background: #000;
+            color: #f0f0f0;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #008000 0%, #ff6600 50%, #008000 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            background: #008000;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+        
+        .faq-item {
+            background: white;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        body.dark-mode .faq-item {
+            background: #1a1a1a;
+        }
+        
+        .faq-question {
+            background: linear-gradient(135deg, #008000, #ff6600);
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .faq-question:hover {
+            background: linear-gradient(135deg, #ff6600, #008000);
+        }
+        
+        .faq-answer {
+            padding: 20px;
+            display: none;
+            line-height: 1.8;
+        }
+        
+        .faq-answer.active {
+            display: block;
+        }
+        
+        body.dark-mode .faq-answer {
+            color: #e0e0e0;
+        }
+        
+        .faq-icon {
+            font-size: 1.3em;
+            transition: transform 0.3s;
+        }
+        
+        .faq-icon.active {
+            transform: rotate(180deg);
+        }
+        
+        footer {
+            background: #000;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff6600, #008000);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5em;
+            z-index: 999;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .faq-question {
+                padding: 12px 15px;
+                font-size: 0.95em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>❓ FAQ - Ajiyar Jiyoyin</h1>
+        <p>Jiyoyin da aka sani - Frequently Asked Questions</p>
+    </header>
+    
+    <div class="container">
+        <a href="index.html" class="back-link">← Koma Gida</a>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Me M62 WEB TV ce?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                M62 WEB TV tashar talabijin ta yanar gizo ce da aka yi domin sanar da labarin Niger zuwa duniya. 
+                Mun sanar da labari, shirye-shirye, wasanni, muziki, ilimi, da sautin jama'a kwalau kwalau.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Yadda zai iya tuntube M62 WEB TV?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                📞 Tarowa: +227 XX XXX XXXX<br>
+                📧 Email: info@m62webtv.ne<br>
+                💬 WhatsApp: +227 XX XXX XXXX<br>
+                📍 Gida: Niamey, Niger 🇳🇪
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Lokacin jira domin duba gida ne nawa?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Mun bukai kwalau kwalau jiya:
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Jiya - Juma'a: 08:00 - 22:00</li>
+                    <li>Asabba: 10:00 - 20:00</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Ina zai iya taya abubuwa na M62 WEB TV?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Zaka iya tayi shiryewa ta facebook, twitter, whatsapp, da copy link. Kowanin news box akwai 
+                share buttons. Kada mika kuma labarin da kake so a karantarsu.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Ina zai iya sanar da labari zuwa M62 WEB TV?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Zaka iya tuntube mu ko email ko tarowa ko whatsapp. Cikakken sanarwar da mahimman labari, 
+                cu kuma garin bayani zuwa uba:
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>📧 news@m62webtv.ne</li>
+                    <li>📞 +227 XX XXX XXXX</li>
+                    <li>💬 WhatsApp: +227 XX XXX XXXX</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Ina zai iya shiryewa a M62 WEB TV?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Akwai taya mada domin shiryewa:
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>📰 Labarin Niger</li>
+                    <li>🎬 Talabiji da sinima</li>
+                    <li>⚽ Wasanni da sakamakon</li>
+                    <li>🎵 Muziki da wakoki</li>
+                    <li>📚 Ilimi da karatu</li>
+                    <li>🎙️ Sautin jama'a</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Ina zai iya juyawa nesa da haske ta M62?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Akwai button na dark mode (moon icon 🌙) a gefe-gefe na shuni. Ku danna shi don juyawa 
+                tsakanin light da dark mode. Muna kiyaye mahimmar ku na theme.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Ina zai iya nema labarin tsakanin shiryewa?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Akwai search box a gida na shuni. Ku baje jiya da kuke nema, zaka iya gani duka 
+                labarin da ke suna jiya.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Ina zai iya kallon talabiji a live?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Akwai "Live TV" section a website inda kaka iya kallon live streaming. Zaka iya kallon 
+                kwalau kwalau jiya tun 08:00 zuwa 22:00.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>Me ko bayarwaciya na M62 WEB TV?</span>
+                <span class="faq-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Bayarwaciya ce PDG MULTIMEDIA TV LTD da ke Niamey, Niger. Mun da mahimman aiki na 
+                sanar da kowane mutum da labarin Niger ta yanar gizo.
+            </div>
+        </div>
+    </div>
+    
+    <button class="theme-toggle" onclick="toggleDarkMode()">🌙</button>
+    
+    <footer>
+        <p>© 2026 M62 WEB TV | Jiya na ina ka?</p>
+    </footer>
+    
+    <script>
+        function toggleFAQ(element) {
+            const question = element;
+            const answer = question.nextElementSibling;
+            const icon = question.querySelector('.faq-icon');
+            
+            // Close other FAQs
+            document.querySelectorAll('.faq-answer').forEach(item => {
+                if (item !== answer) {
+                    item.classList.remove('active');
+                    item.previousElementSibling.querySelector('.faq-icon').classList.remove('active');
+                }
+            });
+            
+            // Toggle current FAQ
+            answer.classList.toggle('active');
+            icon.classList.toggle('active');
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+        
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        });
+    </script>
+</body>
+</html>
