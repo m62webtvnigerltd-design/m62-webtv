@@ -64,6 +64,20 @@ function writeStore(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
 }
 
+function createDebouncedFunction(callback, delayMs = 320) {
+    let timeoutId = null;
+
+    return (...args) => {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+
+        timeoutId = setTimeout(() => {
+            callback(...args);
+        }, delayMs);
+    };
+}
+
 function getLocalVisitorCount() {
     return Number(localStorage.getItem("m62VisitorCount") || "0");
 }
@@ -1684,6 +1698,7 @@ function initializeModerationPage() {
     const saveApiKeyButton = document.getElementById("saveAdminApiKey");
     const logoutButton = document.getElementById("logoutAdminSession");
     const refreshButton = document.getElementById("refreshComments");
+    const clearFiltersButton = document.getElementById("clearCommentsFilters");
     const statusFilter = document.getElementById("commentStatusFilter");
     const searchInput = document.getElementById("commentSearch");
     const searchButton = document.getElementById("searchComments");
@@ -1720,6 +1735,15 @@ function initializeModerationPage() {
     }
 
     refreshButton.addEventListener("click", loadModerationComments);
+
+    const applyModerationSearch = () => {
+        moderationState.query = searchInput ? searchInput.value.trim() : "";
+        moderationState.page = 1;
+        loadModerationComments();
+    };
+
+    const debouncedModerationSearch = createDebouncedFunction(applyModerationSearch, 300);
+
     statusFilter.addEventListener("change", () => {
         moderationState.page = 1;
         loadModerationComments();
@@ -1727,18 +1751,41 @@ function initializeModerationPage() {
 
     if (searchInput && searchButton) {
         searchButton.addEventListener("click", () => {
-            moderationState.query = searchInput.value.trim();
-            moderationState.page = 1;
-            loadModerationComments();
+            applyModerationSearch();
+        });
+
+        searchInput.addEventListener("input", () => {
+            debouncedModerationSearch();
         });
 
         searchInput.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
-                moderationState.query = searchInput.value.trim();
-                moderationState.page = 1;
-                loadModerationComments();
+                applyModerationSearch();
             }
+        });
+    }
+
+    if (clearFiltersButton) {
+        clearFiltersButton.addEventListener("click", () => {
+            moderationState.query = "";
+            moderationState.status = "all";
+            moderationState.page = 1;
+            moderationState.pageSize = 25;
+
+            if (searchInput) {
+                searchInput.value = "";
+            }
+
+            if (statusFilter) {
+                statusFilter.value = "all";
+            }
+
+            if (pageSizeSelect) {
+                pageSizeSelect.value = "25";
+            }
+
+            loadModerationComments();
         });
     }
 
@@ -2133,6 +2180,7 @@ function initializeVideosManagementPage() {
 function initializeUsersManagementPage() {
     const tableBody = document.getElementById("usersTableBody");
     const refreshButton = document.getElementById("refreshUsersBtn");
+    const clearFiltersButton = document.getElementById("clearUsersFiltersBtn");
     const searchInput = document.getElementById("usersSearch");
     const roleFilter = document.getElementById("usersRoleFilter");
     const statusFilter = document.getElementById("usersStatusFilter");
@@ -2166,6 +2214,10 @@ function initializeUsersManagementPage() {
         }
     };
 
+    const debouncedLoadUsersTable = createDebouncedFunction(() => {
+        loadUsersTable();
+    }, 300);
+
     if (refreshButton) {
         refreshButton.addEventListener("click", () => {
             loadUsersTable();
@@ -2173,6 +2225,10 @@ function initializeUsersManagementPage() {
     }
 
     if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            debouncedLoadUsersTable();
+        });
+
         searchInput.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
@@ -2189,6 +2245,24 @@ function initializeUsersManagementPage() {
 
     if (statusFilter) {
         statusFilter.addEventListener("change", () => {
+            loadUsersTable();
+        });
+    }
+
+    if (clearFiltersButton) {
+        clearFiltersButton.addEventListener("click", () => {
+            if (searchInput) {
+                searchInput.value = "";
+            }
+
+            if (roleFilter) {
+                roleFilter.value = "";
+            }
+
+            if (statusFilter) {
+                statusFilter.value = "";
+            }
+
             loadUsersTable();
         });
     }
