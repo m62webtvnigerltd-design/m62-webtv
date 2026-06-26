@@ -4,51 +4,86 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>M62 WEB TV - Live TV</title>
-
 <link rel="stylesheet" href="../css/styles.css">
 </head>
+<body class="admin-app">
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <div class="admin-brand-mark">📺</div>
+            <div>
+                <h1>M62 WEB TV</h1>
+                <p>Admin Platform</p>
+            </div>
+        </div>
+        <ul class="admin-menu">
+            <li><a href="dashboard.html">🏠 Dashboard</a></li>
+            <li><a href="news.html">📰 News</a></li>
+            <li><a href="videos.html">🎥 Videos</a></li>
+            <li><a class="is-active" href="livetv.html">📡 Live TV</a></li>
+            <li><a href="comments.html">💬 Comments</a></li>
+            <li><a href="users.html">👥 Users</a></li>
+            <li><a href="statistics.html">📊 Statistics</a></li>
+            <li><a href="settings.html">⚙ Settings</a></li>
+            <li><a href="login.html">🔐 Login</a></li>
+        </ul>
+    </aside>
 
-<body>
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <h2>Live TV Management</h2>
+                <p>Control live stream source and on-air status in one panel.</p>
+            </div>
+            <span class="admin-badge">Broadcast Control</span>
+        </header>
 
-<div class="main-content">
+        <section class="admin-grid admin-split">
+            <article class="admin-card">
+                <h3>Live Stream Settings</h3>
+                <div class="admin-form-grid">
+                    <div class="admin-field" style="grid-column:1/-1;">
+                        <label for="liveUrl">Live Stream URL</label>
+                        <input type="text" id="liveUrl" placeholder="Paste YouTube Embed URL">
+                    </div>
+                    <div class="admin-field">
+                        <label for="liveStatus">Live Status</label>
+                        <select id="liveStatus">
+                            <option value="OFFLINE">OFFLINE</option>
+                            <option value="LIVE">LIVE</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="admin-actions">
+                    <button onclick="saveLiveTV()">Save Live TV</button>
+                </div>
+            </article>
 
-<a href="dashboard.html" class="back-btn">← Back To Dashboard</a>
+            <article class="admin-card admin-stack">
+                <h3>Operational Note</h3>
+                <p class="admin-muted">Use embeddable URLs only and validate stream health before setting LIVE status.</p>
+                <div class="admin-hero-note">Switch back to OFFLINE during maintenance windows.</div>
+            </article>
+        </section>
 
-<h1>LIVE TV MANAGEMENT</h1>
-
-<div class="news-form">
-
-<label>Live Stream URL</label>
-<input type="text" id="liveUrl" placeholder="Paste YouTube Embed URL">
-
-<label>Live Status</label>
-<select id="liveStatus">
-    <option value="OFFLINE">OFFLINE</option>
-    <option value="LIVE">LIVE</option>
-</select>
-
-<br><br>
-
-<button onclick="saveLiveTV()">Save Live TV</button>
-
+        <section class="admin-grid">
+            <article class="admin-card">
+                <h3>Current Live TV</h3>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Live URL</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liveTable"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </main>
 </div>
-
-<h2>Current Live TV</h2>
-
-<table>
-<thead>
-<tr>
-<th>Live URL</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="liveTable"></tbody>
-</table>
-
-</div>
-
 <script src="../js/main.js"></script>
-
 </body>
 </html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV - Statistics</title>
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="admin-app">
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <div class="admin-brand-mark">📺</div>
+            <div>
+                <h1>M62 WEB TV</h1>
+                <p>Admin Platform</p>
+            </div>
+        </div>
+        <ul class="admin-menu">
+            <li><a href="dashboard.html">🏠 Dashboard</a></li>
+            <li><a href="news.html">📰 News</a></li>
+            <li><a href="videos.html">🎥 Videos</a></li>
+            <li><a href="livetv.html">📡 Live TV</a></li>
+            <li><a href="comments.html">💬 Comments</a></li>
+            <li><a href="users.html">👥 Users</a></li>
+            <li><a class="is-active" href="statistics.html">📊 Statistics</a></li>
+            <li><a href="settings.html">⚙ Settings</a></li>
+            <li><a href="login.html">🔐 Login</a></li>
+        </ul>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <h2>Platform Statistics</h2>
+                <p>Monitor publication velocity, user activity, and engagement quality.</p>
+            </div>
+            <span class="admin-badge" id="statsGeneratedAt">Live snapshot</span>
+        </header>
+
+        <section class="admin-grid admin-kpi-grid">
+            <article class="admin-card admin-kpi">
+                <span class="label">News Published</span>
+                <span class="value" id="statNewsCount">0</span>
+                <span class="trend">Content output</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Videos Published</span>
+                <span class="value" id="statVideosCount">0</span>
+                <span class="trend">Media output</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Comments</span>
+                <span class="value" id="statCommentsCount">0</span>
+                <span class="trend">Community volume</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Users</span>
+                <span class="value" id="statUsersCount">0</span>
+                <span class="trend">Team size</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Visitors</span>
+                <span class="value" id="statVisitorsCount">0</span>
+                <span class="trend">Audience reach</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Engagement</span>
+                <span class="value" id="statEngagementCount">0</span>
+                <span class="trend">Interaction score</span>
+            </article>
+        </section>
+
+        <section class="admin-grid admin-split">
+            <article class="admin-card admin-stack">
+                <h3>Performance Insights</h3>
+                <p class="admin-muted" id="statsSummaryLine">Generating insights...</p>
+                <ul class="admin-muted" id="statsInsightsList" style="margin:0; padding-left:18px;"></ul>
+                <div class="admin-actions">
+                    <button type="button" id="refreshStatisticsBtn">Refresh Snapshot</button>
+                </div>
+            </article>
+
+            <article class="admin-card admin-stack">
+                <h3>Operational Health</h3>
+                <p><span class="admin-status-pill success" id="statsApiStatus">API reachable</span></p>
+                <p class="admin-muted">Snapshot uses dashboard metrics and local fallbacks when backend is offline.</p>
+                <div class="admin-hero-note">Use this page before daily editorial standup to align priorities.</div>
+            </article>
+        </section>
+    </main>
+</div>
+<script src="../js/main.js"></script>
+</body>
+</html>

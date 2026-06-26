@@ -1333,6 +1333,8 @@ function saveLiveTV() {
 function loadLiveTV() {
     const liveTV = readStore("liveTV", null);
     const table = document.getElementById("liveTable");
+    const liveUrlInput = document.getElementById("liveUrl");
+    const liveStatusInput = document.getElementById("liveStatus");
 
     if (!table) {
         return;
@@ -1341,12 +1343,22 @@ function loadLiveTV() {
     table.innerHTML = "";
 
     if (liveTV) {
+        if (liveUrlInput) {
+            liveUrlInput.value = String(liveTV.url || "");
+        }
+
+        if (liveStatusInput) {
+            liveStatusInput.value = String(liveTV.status || "OFFLINE");
+        }
+
         table.innerHTML = `
         <tr>
             <td>${liveTV.url}</td>
             <td>${liveTV.status}</td>
         </tr>
         `;
+    } else if (liveStatusInput) {
+        liveStatusInput.value = "OFFLINE";
     }
 }
 
@@ -2830,6 +2842,211 @@ function initializeUsersManagementPage() {
     loadUsersTable();
 }
 
+function getDefaultPlatformSettings() {
+    return {
+        siteDisplayName: "M62 WEB TV NIGER",
+        siteTagline: "The Voice of the People",
+        defaultLanguage: "ha",
+        homepageFeaturedCount: "4",
+        newsDefaultStatus: "published",
+        videoDefaultStatus: "published",
+        watermarkText: "M62 WEB TV Official",
+        requireStrongPasswords: "strict",
+        sessionTimeoutMinutes: "60",
+        securityNotice: "Use verified admin accounts only.",
+        enableQuickModeration: true,
+        enableAutoRefresh: false,
+        showDraftWarnings: true,
+        savedAt: ""
+    };
+}
+
+function readPlatformSettings() {
+    const defaults = getDefaultPlatformSettings();
+    const stored = readStore("platformSettings", {});
+    return {
+        ...defaults,
+        ...(stored && typeof stored === "object" ? stored : {})
+    };
+}
+
+function writePlatformSettings(settings) {
+    writeStore("platformSettings", settings);
+}
+
+function initializeSettingsPage() {
+    const saveButton = document.getElementById("savePlatformSettings");
+    const resetButton = document.getElementById("resetPlatformSettings");
+
+    if (!saveButton || !resetButton) {
+        return;
+    }
+
+    if (!enforceAdminAccessOnLoad()) {
+        return;
+    }
+
+    const inputIds = [
+        "siteDisplayName",
+        "siteTagline",
+        "defaultLanguage",
+        "homepageFeaturedCount",
+        "newsDefaultStatus",
+        "videoDefaultStatus",
+        "watermarkText",
+        "requireStrongPasswords",
+        "sessionTimeoutMinutes",
+        "securityNotice"
+    ];
+
+    const checkboxIds = [
+        "enableQuickModeration",
+        "enableAutoRefresh",
+        "showDraftWarnings"
+    ];
+
+    const feedback = document.getElementById("settingsFeedback");
+    const savedAtBadge = document.getElementById("settingsSavedAt");
+
+    const applySettingsToForm = (settings) => {
+        inputIds.forEach((id) => {
+            const node = document.getElementById(id);
+            if (node) {
+                node.value = String(settings[id] ?? "");
+            }
+        });
+
+        checkboxIds.forEach((id) => {
+            const node = document.getElementById(id);
+            if (node) {
+                node.checked = Boolean(settings[id]);
+            }
+        });
+
+        if (savedAtBadge) {
+            savedAtBadge.textContent = settings.savedAt
+                ? `Saved: ${new Date(settings.savedAt).toLocaleString()}`
+                : "Not saved yet";
+        }
+    };
+
+    const collectFormSettings = () => {
+        const next = readPlatformSettings();
+
+        inputIds.forEach((id) => {
+            const node = document.getElementById(id);
+            if (node) {
+                next[id] = String(node.value || "").trim();
+            }
+        });
+
+        checkboxIds.forEach((id) => {
+            const node = document.getElementById(id);
+            if (node) {
+                next[id] = Boolean(node.checked);
+            }
+        });
+
+        next.savedAt = new Date().toISOString();
+        return next;
+    };
+
+    applySettingsToForm(readPlatformSettings());
+
+    saveButton.addEventListener("click", () => {
+        const nextSettings = collectFormSettings();
+        writePlatformSettings(nextSettings);
+        applySettingsToForm(nextSettings);
+
+        if (feedback) {
+            feedback.textContent = "Settings saved successfully.";
+        }
+    });
+
+    resetButton.addEventListener("click", () => {
+        const defaults = getDefaultPlatformSettings();
+        writePlatformSettings(defaults);
+        applySettingsToForm(defaults);
+
+        if (feedback) {
+            feedback.textContent = "Settings reset to defaults.";
+        }
+    });
+}
+
+function initializeStatisticsPage() {
+    const newsNode = document.getElementById("statNewsCount");
+    const refreshButton = document.getElementById("refreshStatisticsBtn");
+
+    if (!newsNode || !refreshButton) {
+        return;
+    }
+
+    if (!enforceAdminAccessOnLoad()) {
+        return;
+    }
+
+    const statNodes = {
+        newsCount: document.getElementById("statNewsCount"),
+        videosCount: document.getElementById("statVideosCount"),
+        commentsCount: document.getElementById("statCommentsCount"),
+        usersCount: document.getElementById("statUsersCount"),
+        visitorsCount: document.getElementById("statVisitorsCount"),
+        engagementCount: document.getElementById("statEngagementCount")
+    };
+
+    const summaryLine = document.getElementById("statsSummaryLine");
+    const insightsList = document.getElementById("statsInsightsList");
+    const generatedAt = document.getElementById("statsGeneratedAt");
+    const apiStatus = document.getElementById("statsApiStatus");
+
+    const renderStatistics = async () => {
+        const stats = await fetchDashboardStats();
+
+        Object.entries(statNodes).forEach(([key, node]) => {
+            if (node) {
+                node.textContent = String(stats[key] || 0);
+            }
+        });
+
+        if (generatedAt) {
+            generatedAt.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        const totalContent = Number(stats.newsCount || 0) + Number(stats.videosCount || 0);
+        const engagementRate = totalContent > 0
+            ? ((Number(stats.engagementCount || 0) / totalContent) * 100).toFixed(1)
+            : "0.0";
+
+        if (summaryLine) {
+            summaryLine.textContent = `You have ${totalContent} published content items with ~${engagementRate}% engagement per item.`;
+        }
+
+        if (insightsList) {
+            const insights = [
+                `${stats.newsCount || 0} news entries are currently visible in the pipeline.`,
+                `${stats.videosCount || 0} videos are available for homepage and archive feeds.`,
+                `${stats.commentsCount || 0} comments indicate community interaction depth.`,
+                `${stats.usersCount || 0} team members currently have system access.`
+            ];
+
+            insightsList.innerHTML = insights.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+        }
+
+        if (apiStatus) {
+            const apiLikelyOnline = Number(stats.usersCount || 0) > 0 || Number(stats.commentsCount || 0) > 0;
+            apiStatus.textContent = apiLikelyOnline ? "API reachable" : "Fallback mode";
+            apiStatus.className = `admin-status-pill ${apiLikelyOnline ? "success" : "warning"}`;
+        }
+    };
+
+    refreshButton.addEventListener("click", () => {
+        renderStatistics();
+    });
+
+    renderStatistics();
+}
+
 async function refreshEngagementWidgets() {
     const widgets = document.querySelectorAll(".engagement-widget");
 
@@ -3044,5 +3261,7 @@ window.addEventListener("load", initializeAdminLoginPage);
 window.addEventListener("load", initializeNewsManagementPage);
 window.addEventListener("load", initializeVideosManagementPage);
 window.addEventListener("load", initializeUsersManagementPage);
+window.addEventListener("load", initializeSettingsPage);
+window.addEventListener("load", initializeStatisticsPage);
 
 bindEngagementForms();

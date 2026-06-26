@@ -4,206 +4,114 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>M62 WEB TV Admin Dashboard</title>
-
-<style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
-}
-
-body{
-display:flex;
-background:#f4f4f4;
-}
-
-.sidebar{
-width:270px;
-height:100vh;
-background:#021d3a;
-color:white;
-position:fixed;
-}
-
-.logo{
-text-align:center;
-padding:30px;
-font-size:32px;
-}
-
-.sidebar ul{
-list-style:none;
-}
-
-.sidebar ul li{
-border-top:1px solid rgba(255,255,255,.1);
-}
-
-.sidebar ul li a{
-display:block;
-padding:20px;
-color:white;
-text-decoration:none;
-font-size:22px;
-}
-
-.sidebar ul li a:hover{
-background:#0b2d57;
-}
-
-.main-content{
-margin-left:270px;
-width:100%;
-padding:40px;
-}
-
-.main-content h1{
-text-align:center;
-color:#c0392b;
-margin-bottom:40px;
-font-size:48px;
-}
-
-.cards{
-display:flex;
-justify-content:center;
-gap:30px;
-flex-wrap:wrap;
-}
-
-.card{
-background:white;
-width:280px;
-height:180px;
-border-radius:15px;
-text-align:center;
-padding-top:30px;
-box-shadow:0 0 10px rgba(0,0,0,.1);
-}
-
-.card h2{
-margin-bottom:20px;
-}
-
-.card p{
-font-size:60px;
-font-weight:bold;
-color:#c0392b;
-}
-
-.news-table{
-margin-top:50px;
-}
-
-.news-table h2{
-margin-bottom:20px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th{
-background:#c0392b;
-color:white;
-padding:15px;
-}
-
-td{
-padding:15px;
-border:1px solid #ddd;
-}
-</style>
+<link rel="stylesheet" href="../css/styles.css">
 </head>
+<body class="admin-app">
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <div class="admin-brand-mark">📺</div>
+            <div>
+                <h1>M62 WEB TV</h1>
+                <p>Admin Platform</p>
+            </div>
+        </div>
+        <ul class="admin-menu">
+            <li><a class="is-active" href="dashboard.html">🏠 Dashboard</a></li>
+            <li><a href="news.html">📰 News</a></li>
+            <li><a href="videos.html">🎥 Videos</a></li>
+            <li><a href="livetv.html">📡 Live TV</a></li>
+            <li><a href="comments.html">💬 Comments</a></li>
+            <li><a href="users.html">👥 Users</a></li>
+            <li><a href="statistics.html">📊 Statistics</a></li>
+            <li><a href="settings.html">⚙ Settings</a></li>
+            <li><a href="login.html">🔐 Login</a></li>
+        </ul>
+    </aside>
 
-<body>
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <h2>Dashboard Overview</h2>
+                <p>Real-time control center for content, users, and engagement.</p>
+            </div>
+            <span class="admin-badge">Platform Health: Active</span>
+        </header>
 
-<div class="sidebar">
+        <section class="admin-grid admin-kpi-grid">
+            <article class="admin-card admin-kpi">
+                <span class="label">Total News</span>
+                <span class="value" id="totalNews">0</span>
+                <span class="trend">Content pipeline</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Total Videos</span>
+                <span class="value" id="totalVideos">0</span>
+                <span class="trend">Media library</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Visitors</span>
+                <span class="value" id="totalVisitors">0</span>
+                <span class="trend">Audience growth</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Active Users</span>
+                <span class="value" id="totalUsers">0</span>
+                <span class="trend">Team productivity</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Comments</span>
+                <span class="value" id="totalComments">0</span>
+                <span class="trend">Community pulse</span>
+            </article>
+            <article class="admin-card admin-kpi">
+                <span class="label">Engagement</span>
+                <span class="value" id="totalEngagement">0</span>
+                <span class="trend">Interaction strength</span>
+            </article>
+        </section>
 
-<div class="logo">
-📺
-<h2>M62 WEB TV</h2>
+        <section class="admin-grid admin-split">
+            <article class="admin-card">
+                <h3>Quick Actions</h3>
+                <div class="admin-actions">
+                    <a href="news.html">Create News</a>
+                    <a href="videos.html">Publish Video</a>
+                    <a href="comments.html">Moderate Comments</a>
+                    <a href="users.html">Manage Users</a>
+                </div>
+                <p class="admin-hero-note">Tip: keep drafts and published status balanced for safer publishing workflows.</p>
+            </article>
+
+            <article class="admin-card">
+                <h3>Admin Access</h3>
+                <p class="admin-muted">Use settings and security pages for production controls and branding updates.</p>
+                <div class="admin-actions">
+                    <a class="admin-secondary-btn" href="settings.html">Open Settings</a>
+                    <a class="admin-secondary-btn" href="statistics.html">View Statistics</a>
+                </div>
+            </article>
+        </section>
+
+        <section class="admin-grid">
+            <article class="admin-card">
+                <h3>Latest News</h3>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="latestNews"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </main>
 </div>
-
-<ul>
-<li><a href="dashboard.html">🏠 Dashboard</a></li>
-<li><a href="login.html">🔐 Admin Login</a></li>
-<li><a href="news.html">📰 News Management</a></li>
-<li><a href="videos.html">🎥 Videos</a></li>
-<li><a href="livetv.html">📡 Live TV</a></li>
-<li><a href="comments.html">💬 Comments</a></li>
-<li><a href="statistics.html">📊 Statistics</a></li>
-<li><a href="users.html">👥 Users</a></li>
-<li><a href="settings.html">⚙ Settings</a></li>
-</ul>
-
-</div>
-
-<div class="main-content">
-
-<h1>M62 WEB TV ADMIN DASHBOARD</h1>
-
-<div class="cards">
-
-<div class="card">
-<h2>Total News</h2>
-<p id="totalNews">0</p>
-</div>
-
-<div class="card">
-<h2>Total Videos</h2>
-<p id="totalVideos">0</p>
-</div>
-
-<div class="card">
-<h2>Visitors</h2>
-<p id="totalVisitors">0</p>
-</div>
-
-<div class="card">
-<h2>Active Users</h2>
-<p id="totalUsers">0</p>
-</div>
-
-<div class="card">
-<h2>Comments</h2>
-<p id="totalComments">0</p>
-</div>
-
-<div class="card">
-<h2>Engagement</h2>
-<p id="totalEngagement">0</p>
-</div>
-
-</div>
-
-<div class="news-table">
-
-<h2>Latest News</h2>
-
-<table>
-
-<thead>
-<tr>
-<th>Title</th>
-<th>Date</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="latestNews">
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
 <script src="../js/main.js"></script>
-
 </body>
 </html>

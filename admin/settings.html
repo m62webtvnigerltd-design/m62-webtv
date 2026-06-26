@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV - Settings</title>
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="admin-app">
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <div class="admin-brand-mark">📺</div>
+            <div>
+                <h1>M62 WEB TV</h1>
+                <p>Admin Platform</p>
+            </div>
+        </div>
+        <ul class="admin-menu">
+            <li><a href="dashboard.html">🏠 Dashboard</a></li>
+            <li><a href="news.html">📰 News</a></li>
+            <li><a href="videos.html">🎥 Videos</a></li>
+            <li><a href="livetv.html">📡 Live TV</a></li>
+            <li><a href="comments.html">💬 Comments</a></li>
+            <li><a href="users.html">👥 Users</a></li>
+            <li><a href="statistics.html">📊 Statistics</a></li>
+            <li><a class="is-active" href="settings.html">⚙ Settings</a></li>
+            <li><a href="login.html">🔐 Login</a></li>
+        </ul>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <h2>Platform Settings</h2>
+                <p>Configure broadcast identity, publishing defaults, and security controls.</p>
+            </div>
+            <span class="admin-badge" id="settingsSavedAt">Not saved yet</span>
+        </header>
+
+        <section class="admin-grid admin-split">
+            <article class="admin-card">
+                <h3>General Settings</h3>
+                <div class="admin-form-grid">
+                    <div class="admin-field">
+                        <label for="siteDisplayName">Display Name</label>
+                        <input type="text" id="siteDisplayName" placeholder="M62 WEB TV NIGER">
+                    </div>
+                    <div class="admin-field">
+                        <label for="siteTagline">Tagline</label>
+                        <input type="text" id="siteTagline" placeholder="The Voice of the People">
+                    </div>
+                    <div class="admin-field">
+                        <label for="defaultLanguage">Default Language</label>
+                        <select id="defaultLanguage">
+                            <option value="ha">Hausa</option>
+                            <option value="en">English</option>
+                            <option value="fr">Français</option>
+                            <option value="ar">Arabic</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label for="homepageFeaturedCount">Featured Items on Homepage</label>
+                        <select id="homepageFeaturedCount">
+                            <option value="4">4</option>
+                            <option value="6">6</option>
+                            <option value="8">8</option>
+                        </select>
+                    </div>
+                </div>
+            </article>
+
+            <article class="admin-card">
+                <h3>Publishing Defaults</h3>
+                <div class="admin-form-grid">
+                    <div class="admin-field">
+                        <label for="newsDefaultStatus">Default News Status</label>
+                        <select id="newsDefaultStatus">
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label for="videoDefaultStatus">Default Video Status</label>
+                        <select id="videoDefaultStatus">
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                    <div class="admin-field" style="grid-column:1/-1;">
+                        <label for="watermarkText">Watermark Text</label>
+                        <input type="text" id="watermarkText" placeholder="M62 WEB TV Official">
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="admin-grid admin-split">
+            <article class="admin-card">
+                <h3>Security Controls</h3>
+                <div class="admin-form-grid">
+                    <div class="admin-field">
+                        <label for="requireStrongPasswords">Password Policy</label>
+                        <select id="requireStrongPasswords">
+                            <option value="strict">Strict</option>
+                            <option value="standard">Standard</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label for="sessionTimeoutMinutes">Session Timeout (minutes)</label>
+                        <input type="number" id="sessionTimeoutMinutes" min="10" max="240" value="60">
+                    </div>
+                    <div class="admin-field" style="grid-column:1/-1;">
+                        <label for="securityNotice">Security Notice</label>
+                        <textarea id="securityNotice" rows="3" placeholder="Visible reminder for admin operators"></textarea>
+                    </div>
+                </div>
+            </article>
+
+            <article class="admin-card admin-stack">
+                <h3>System Preferences</h3>
+                <label><input type="checkbox" id="enableQuickModeration"> Enable quick moderation shortcuts</label>
+                <label><input type="checkbox" id="enableAutoRefresh"> Auto refresh admin lists every 60s</label>
+                <label><input type="checkbox" id="showDraftWarnings"> Show warnings before publishing drafts</label>
+                <div class="admin-hero-note">Settings are stored in this browser profile for now.</div>
+            </article>
+        </section>
+
+        <section class="admin-grid">
+            <article class="admin-card">
+                <div class="admin-actions">
+                    <button type="button" id="savePlatformSettings">Save Settings</button>
+                    <button type="button" id="resetPlatformSettings" class="admin-secondary-btn">Reset to Defaults</button>
+                    <span id="settingsFeedback" class="admin-muted"></span>
+                </div>
+            </article>
+        </section>
+    </main>
+</div>
+<script src="../js/main.js"></script>
+</body>
+</html>

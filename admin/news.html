@@ -4,249 +4,134 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>M62 WEB TV - News Management</title>
-
-<style>
-
-body{
-    font-family:Arial,sans-serif;
-    background:#f4f4f4;
-    margin:0;
-    padding:40px;
-}
-
-.main-content{
-    max-width:1000px;
-    margin:auto;
-}
-
-h1{
-    color:#c0392b;
-    text-align:center;
-}
-
-.news-form{
-    background:white;
-    padding:25px;
-    border-radius:10px;
-    box-shadow:0 0 10px rgba(0,0,0,0.1);
-    margin-bottom:24px;
-}
-
-.row-2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-}
-
-.news-list{
-    background:white;
-    padding:18px;
-    border-radius:10px;
-    box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
-
-.news-list-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:12px;
-    gap:12px;
-}
-
-.news-list-controls{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-}
-
-.news-list-controls input,
-.news-list-controls select{
-    width:auto;
-    min-width:170px;
-    margin-top:0;
-}
-
-.news-list table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-.news-list th,
-.news-list td{
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:left;
-    vertical-align:top;
-}
-
-.news-list th{
-    background:#c0392b;
-    color:white;
-}
-
-.hint{
-    font-size:13px;
-    color:#5f6b77;
-}
-
-.upload-row{
-    display:flex;
-    gap:10px;
-    align-items:center;
-}
-
-.upload-row input[type="file"]{
-    flex:1;
-}
-
-.upload-row button{
-    margin-top:0;
-    width:auto;
-    white-space:nowrap;
-}
-
-.upload-status{
-    margin-top:6px;
-    font-size:13px;
-    color:#5f6b77;
-}
-
-@media(max-width:800px){
-    .row-2{
-        grid-template-columns:1fr;
-    }
-}
-
-label{
-    display:block;
-    margin-top:15px;
-    margin-bottom:5px;
-    font-weight:bold;
-}
-
-input,
-textarea{
-    width:100%;
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:5px;
-    box-sizing:border-box;
-}
-
-button{
-    margin-top:20px;
-    background:#c0392b;
-    color:white;
-    border:none;
-    padding:12px 20px;
-    cursor:pointer;
-    border-radius:5px;
-}
-
-button:hover{
-    background:#a93226;
-}
-
-.back-btn{
-    display:inline-block;
-    margin-bottom:20px;
-    text-decoration:none;
-    color:#c0392b;
-    font-weight:bold;
-}
-
-</style>
-
+<link rel="stylesheet" href="../css/styles.css">
 </head>
-<body>
-
-<div class="main-content">
-
-<a href="dashboard.html" class="back-btn">
-← Back To Dashboard
-</a>
-
-<h1>News Management</h1>
-
-<div class="news-form">
-
-<label>News Title</label>
-<input type="text" id="newsTitle" placeholder="Enter News Title">
-
-<label>Summary</label>
-<textarea id="newsSummary" rows="3" placeholder="Short summary for homepage"></textarea>
-
-<div class="row-2">
-    <div>
-        <label>Category</label>
-        <input type="text" id="newsCategory" placeholder="Politics, Sports, Economy..." value="General">
-    </div>
-    <div>
-        <label>Status</label>
-        <select id="newsStatus">
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-        </select>
-    </div>
-</div>
-
-<label>Cover Image URL</label>
-<input type="url" id="newsCoverImage" placeholder="https://example.com/news-image.jpg">
-
-<label>Or Upload Cover Image</label>
-<div class="upload-row">
-    <input type="file" id="newsImageFile" accept="image/*">
-    <button type="button" id="uploadNewsImage">Upload Image</button>
-</div>
-<div class="upload-status" id="newsImageUploadStatus">No image uploaded yet.</div>
-
-<label>News Content</label>
-<textarea id="newsContent" rows="8" placeholder="Write your news here..."></textarea>
-
-<p class="hint">Tip: Login first from admin/login.html (or use legacy Admin API key in comments page).</p>
-
-<button id="publishNewsButton" onclick="publishNews()">
-    Publish News
-</button>
-
-<button type="button" id="cancelNewsEditButton" style="display:none; margin-left:10px; background:#5f6b77;">
-    Cancel Edit
-</button>
-
-</div>
-
-<div class="news-list">
-    <div class="news-list-header">
-        <h2>Latest News Items</h2>
-        <div class="news-list-controls">
-            <input type="text" id="adminNewsSearch" placeholder="Search title/category...">
-            <select id="adminNewsStatusFilter">
-                <option value="all">All Statuses</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-            </select>
-            <button type="button" id="refreshNewsList">Refresh</button>
+<body class="admin-app">
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <div class="admin-brand-mark">📺</div>
+            <div>
+                <h1>M62 WEB TV</h1>
+                <p>Admin Platform</p>
+            </div>
         </div>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Published</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="adminNewsTableBody">
-            <tr><td colspan="5">Loading...</td></tr>
-        </tbody>
-    </table>
-</div>
+        <ul class="admin-menu">
+            <li><a href="dashboard.html">🏠 Dashboard</a></li>
+            <li><a class="is-active" href="news.html">📰 News</a></li>
+            <li><a href="videos.html">🎥 Videos</a></li>
+            <li><a href="livetv.html">📡 Live TV</a></li>
+            <li><a href="comments.html">💬 Comments</a></li>
+            <li><a href="users.html">👥 Users</a></li>
+            <li><a href="statistics.html">📊 Statistics</a></li>
+            <li><a href="settings.html">⚙ Settings</a></li>
+            <li><a href="login.html">🔐 Login</a></li>
+        </ul>
+    </aside>
 
-</div>
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <h2>News Management</h2>
+                <p>Create, edit, and control publishing workflow for all news content.</p>
+            </div>
+            <span class="admin-badge">Editorial Desk</span>
+        </header>
 
+        <section class="admin-grid admin-split">
+            <article class="admin-card">
+                <h3>Create or Edit News</h3>
+                <div class="admin-form-grid">
+                    <div class="admin-field">
+                        <label for="newsTitle">News Title</label>
+                        <input type="text" id="newsTitle" placeholder="Enter News Title">
+                    </div>
+                    <div class="admin-field">
+                        <label for="newsCategory">Category</label>
+                        <input type="text" id="newsCategory" placeholder="Politics, Sports, Economy..." value="General">
+                    </div>
+                    <div class="admin-field" style="grid-column:1/-1;">
+                        <label for="newsSummary">Summary</label>
+                        <textarea id="newsSummary" rows="3" placeholder="Short summary for homepage"></textarea>
+                    </div>
+                    <div class="admin-field">
+                        <label for="newsStatus">Status</label>
+                        <select id="newsStatus">
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label for="newsCoverImage">Cover Image URL</label>
+                        <input type="url" id="newsCoverImage" placeholder="https://example.com/news-image.jpg">
+                    </div>
+                    <div class="admin-field" style="grid-column:1/-1;">
+                        <label for="newsImageFile">Or Upload Cover Image</label>
+                        <div class="admin-actions">
+                            <input class="admin-input" type="file" id="newsImageFile" accept="image/*">
+                            <button type="button" id="uploadNewsImage">Upload Image</button>
+                        </div>
+                        <p class="admin-muted" id="newsImageUploadStatus">No image uploaded yet.</p>
+                    </div>
+                    <div class="admin-field" style="grid-column:1/-1;">
+                        <label for="newsContent">News Content</label>
+                        <textarea id="newsContent" rows="8" placeholder="Write your news here..."></textarea>
+                    </div>
+                </div>
+
+                <p class="admin-muted">Tip: Login first from admin/login.html or use legacy admin key in moderation page if required.</p>
+                <div class="admin-actions">
+                    <button id="publishNewsButton" onclick="publishNews()">Publish News</button>
+                    <button type="button" id="cancelNewsEditButton" class="admin-secondary-btn" style="display:none;">Cancel Edit</button>
+                </div>
+            </article>
+
+            <article class="admin-card admin-stack">
+                <div>
+                    <h3>Editorial Notes</h3>
+                    <p class="admin-muted">Use clear titles, concise summaries, and quality cover images for stronger engagement.</p>
+                </div>
+                <div class="admin-hero-note">
+                    Keep at least one draft ready to speed up breaking-news publishing.
+                </div>
+            </article>
+        </section>
+
+        <section class="admin-grid">
+            <article class="admin-card">
+                <div class="admin-actions" style="justify-content:space-between; margin-bottom:10px;">
+                    <h3 style="margin:0;">Latest News Items</h3>
+                    <div class="admin-actions">
+                        <input class="admin-input" type="text" id="adminNewsSearch" placeholder="Search title/category...">
+                        <select class="admin-select" id="adminNewsStatusFilter">
+                            <option value="all">All Statuses</option>
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                        <button type="button" id="refreshNewsList">Refresh</button>
+                    </div>
+                </div>
+
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Published</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminNewsTableBody">
+                            <tr><td colspan="5">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </main>
+</div>
 <script src="../js/main.js"></script>
 </body>
 </html>
