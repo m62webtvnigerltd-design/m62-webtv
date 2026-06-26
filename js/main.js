@@ -31,6 +31,12 @@ const moderationState = {
     totalPages: 1,
     selected: new Set()
 };
+const adminEditorState = {
+    newsId: "",
+    videoId: "",
+    newsItems: [],
+    videoItems: []
+};
 
 class ApiError extends Error {
     constructor(message, status, retryAfterSeconds = 0) {
@@ -354,6 +360,22 @@ async function createNewsItem(payload) {
     return response.json();
 }
 
+async function updateNewsItem(newsId, payload) {
+    ensureAdminCredentialAvailable();
+
+    const response = await fetch(`${API_BASE_URL}/api/news/${encodeURIComponent(newsId)}`, {
+        method: "PATCH",
+        headers: buildAdminRequestHeaders(true),
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to update news item");
+    }
+
+    return response.json();
+}
+
 async function deleteNewsItem(newsId) {
     ensureAdminCredentialAvailable();
 
@@ -406,8 +428,10 @@ async function publishNews() {
         return;
     }
 
+    const isEditing = Boolean(adminEditorState.newsId);
+
     try {
-        await createNewsItem({
+        const payload = {
             title,
             summary,
             category: category || "General",
@@ -415,24 +439,71 @@ async function publishNews() {
             coverImageUrl,
             content,
             tags: []
-        });
+        };
 
-        alert("News published successfully");
-        const contentInput = document.getElementById("newsContent");
-        const summaryInput = document.getElementById("newsSummary");
-        const titleInput = document.getElementById("newsTitle");
-        const imageInput = document.getElementById("newsCoverImage");
+        if (isEditing) {
+            await updateNewsItem(adminEditorState.newsId, payload);
+        } else {
+            await createNewsItem(payload);
+        }
 
-        if (contentInput) contentInput.value = "";
-        if (summaryInput) summaryInput.value = "";
-        if (titleInput) titleInput.value = "";
-        if (imageInput) imageInput.value = "";
+        alert(isEditing ? "News updated successfully" : "News published successfully");
+        resetNewsEditor();
 
         await loadAdminNewsTable();
         await loadNews();
     } catch (error) {
-        alert(error.message || "Unable to publish news");
+        alert(error.message || (isEditing ? "Unable to update news" : "Unable to publish news"));
     }
+}
+
+function resetNewsEditor() {
+    adminEditorState.newsId = "";
+    const contentInput = document.getElementById("newsContent");
+    const summaryInput = document.getElementById("newsSummary");
+    const titleInput = document.getElementById("newsTitle");
+    const imageInput = document.getElementById("newsCoverImage");
+    const categoryInput = document.getElementById("newsCategory");
+    const statusInput = document.getElementById("newsStatus");
+    const publishButton = document.getElementById("publishNewsButton");
+    const cancelButton = document.getElementById("cancelNewsEditButton");
+
+    if (contentInput) contentInput.value = "";
+    if (summaryInput) summaryInput.value = "";
+    if (titleInput) titleInput.value = "";
+    if (imageInput) imageInput.value = "";
+    if (categoryInput) categoryInput.value = "General";
+    if (statusInput) statusInput.value = "published";
+    if (publishButton) publishButton.textContent = "Publish News";
+    if (cancelButton) cancelButton.style.display = "none";
+}
+
+function beginNewsEdit(newsId) {
+    const item = adminEditorState.newsItems.find((entry) => entry.id === newsId);
+
+    if (!item) {
+        alert("Unable to load selected news item.");
+        return;
+    }
+
+    adminEditorState.newsId = newsId;
+    const titleInput = document.getElementById("newsTitle");
+    const summaryInput = document.getElementById("newsSummary");
+    const categoryInput = document.getElementById("newsCategory");
+    const statusInput = document.getElementById("newsStatus");
+    const imageInput = document.getElementById("newsCoverImage");
+    const contentInput = document.getElementById("newsContent");
+    const publishButton = document.getElementById("publishNewsButton");
+    const cancelButton = document.getElementById("cancelNewsEditButton");
+
+    if (titleInput) titleInput.value = item.title || "";
+    if (summaryInput) summaryInput.value = item.summary || "";
+    if (categoryInput) categoryInput.value = item.category || "General";
+    if (statusInput) statusInput.value = item.status || "published";
+    if (imageInput) imageInput.value = item.coverImageUrl || "";
+    if (contentInput) contentInput.value = item.content || "";
+    if (publishButton) publishButton.textContent = "Update News";
+    if (cancelButton) cancelButton.style.display = "inline-block";
 }
 
 async function loadNews() {
@@ -474,7 +545,10 @@ function renderAdminNewsRows(items) {
     <td>${escapeHtml(item.category || "General")}</td>
     <td>${escapeHtml(item.status || "published")}</td>
     <td>${escapeHtml(formatNewsDate(item.publishedAt || item.createdAt))}</td>
-    <td><button type="button" data-news-delete-id="${escapeHtml(item.id)}">Delete</button></td>
+    <td>
+        <button type="button" data-news-edit-id="${escapeHtml(item.id)}">Edit</button>
+        <button type="button" data-news-delete-id="${escapeHtml(item.id)}">Delete</button>
+    </td>
 </tr>
 `).join("");
 }
@@ -489,7 +563,8 @@ async function loadAdminNewsTable() {
     tableBody.innerHTML = "<tr><td colspan=\"5\">Loading...</td></tr>";
 
     const result = await fetchNewsList({ status: "all", pageSize: 100 });
-    tableBody.innerHTML = renderAdminNewsRows(result.data || []);
+    adminEditorState.newsItems = result.data || [];
+    tableBody.innerHTML = renderAdminNewsRows(adminEditorState.newsItems);
 }
 
 function normalizeLegacyVideoItem(item, index) {
@@ -560,6 +635,22 @@ async function createVideoItem(payload) {
 
     if (!response.ok) {
         throw await parseApiError(response, "Failed to create video item");
+    }
+
+    return response.json();
+}
+
+async function updateVideoItem(videoId, payload) {
+    ensureAdminCredentialAvailable();
+
+    const response = await fetch(`${API_BASE_URL}/api/videos/${encodeURIComponent(videoId)}`, {
+        method: "PATCH",
+        headers: buildAdminRequestHeaders(true),
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to update video item");
     }
 
     return response.json();
@@ -713,8 +804,10 @@ async function publishVideo() {
         return;
     }
 
+    const isEditing = Boolean(adminEditorState.videoId);
+
     try {
-        await createVideoItem({
+        const payload = {
             title,
             description,
             category: category || "General",
@@ -722,25 +815,71 @@ async function publishVideo() {
             sourceType,
             videoUrl,
             thumbnailUrl
-        });
+        };
 
-        alert("Video published successfully");
+        if (isEditing) {
+            await updateVideoItem(adminEditorState.videoId, payload);
+        } else {
+            await createVideoItem(payload);
+        }
 
-        const titleInput = document.getElementById("videoTitle");
-        const descriptionInput = document.getElementById("videoDescription");
-        const videoInput = document.getElementById("videoLink");
-        const thumbnailInput = document.getElementById("videoThumbnailUrl");
-
-        if (titleInput) titleInput.value = "";
-        if (descriptionInput) descriptionInput.value = "";
-        if (videoInput) videoInput.value = "";
-        if (thumbnailInput) thumbnailInput.value = "";
+        alert(isEditing ? "Video updated successfully" : "Video published successfully");
+        resetVideoEditor();
 
         await loadVideos();
         await renderHomeVideos();
     } catch (error) {
-        alert(error.message || "Unable to publish video");
+        alert(error.message || (isEditing ? "Unable to update video" : "Unable to publish video"));
     }
+}
+
+function resetVideoEditor() {
+    adminEditorState.videoId = "";
+    const titleInput = document.getElementById("videoTitle");
+    const descriptionInput = document.getElementById("videoDescription");
+    const categoryInput = document.getElementById("videoCategory");
+    const statusInput = document.getElementById("videoStatus");
+    const videoInput = document.getElementById("videoLink");
+    const thumbnailInput = document.getElementById("videoThumbnailUrl");
+    const publishButton = document.getElementById("publishVideoButton");
+    const cancelButton = document.getElementById("cancelVideoEditButton");
+
+    if (titleInput) titleInput.value = "";
+    if (descriptionInput) descriptionInput.value = "";
+    if (categoryInput) categoryInput.value = "General";
+    if (statusInput) statusInput.value = "published";
+    if (videoInput) videoInput.value = "";
+    if (thumbnailInput) thumbnailInput.value = "";
+    if (publishButton) publishButton.textContent = "Publish Video";
+    if (cancelButton) cancelButton.style.display = "none";
+}
+
+function beginVideoEdit(videoId) {
+    const item = adminEditorState.videoItems.find((entry) => entry.id === videoId);
+
+    if (!item) {
+        alert("Unable to load selected video item.");
+        return;
+    }
+
+    adminEditorState.videoId = videoId;
+    const titleInput = document.getElementById("videoTitle");
+    const descriptionInput = document.getElementById("videoDescription");
+    const categoryInput = document.getElementById("videoCategory");
+    const statusInput = document.getElementById("videoStatus");
+    const videoInput = document.getElementById("videoLink");
+    const thumbnailInput = document.getElementById("videoThumbnailUrl");
+    const publishButton = document.getElementById("publishVideoButton");
+    const cancelButton = document.getElementById("cancelVideoEditButton");
+
+    if (titleInput) titleInput.value = item.title || "";
+    if (descriptionInput) descriptionInput.value = item.description || "";
+    if (categoryInput) categoryInput.value = item.category || "General";
+    if (statusInput) statusInput.value = item.status || "published";
+    if (videoInput) videoInput.value = item.videoUrl || "";
+    if (thumbnailInput) thumbnailInput.value = item.thumbnailUrl || "";
+    if (publishButton) publishButton.textContent = "Update Video";
+    if (cancelButton) cancelButton.style.display = "inline-block";
 }
 
 async function loadVideos() {
@@ -755,6 +894,7 @@ async function loadVideos() {
     }
 
     table.innerHTML = "";
+    adminEditorState.videoItems = videos;
 
     videos.forEach((video) => {
         table.innerHTML += `
@@ -763,7 +903,10 @@ async function loadVideos() {
             <td>${escapeHtml(video.category || "General")}</td>
             <td>${escapeHtml(video.status || "published")}</td>
             <td>${escapeHtml(video.sourceType || "external")}</td>
-            <td><button type="button" data-video-delete-id="${escapeHtml(video.id)}">Delete</button></td>
+            <td>
+                <button type="button" data-video-edit-id="${escapeHtml(video.id)}">Edit</button>
+                <button type="button" data-video-delete-id="${escapeHtml(video.id)}">Delete</button>
+            </td>
         </tr>
         `;
     });
@@ -1069,6 +1212,36 @@ function ensureAdminCredentialAvailable() {
     if (!token && !adminKey) {
         throw new Error("Login required. Use Admin Login page or set legacy API key.");
     }
+}
+
+function enforceAdminAccessOnLoad(options = {}) {
+    const { allowLegacyKey = false } = options;
+
+    if (!isAdminPage()) {
+        return true;
+    }
+
+    const path = String(window.location.pathname || "").toLowerCase();
+    if (path.endsWith("login.html")) {
+        return true;
+    }
+
+    const hasToken = Boolean(getAdminAuthToken());
+    const hasLegacyKey = allowLegacyKey && Boolean(getAdminApiKey());
+
+    if (!hasToken && !hasLegacyKey) {
+        redirectToAdminLogin("Please sign in to access the admin area.");
+        return false;
+    }
+
+    synchronizeAdminSession().then((user) => {
+        if (!user && !hasLegacyKey) {
+            clearAdminAuthSession();
+            redirectToAdminLogin("Your admin session expired. Please sign in again.");
+        }
+    });
+
+    return true;
 }
 
 function renderAdminAuthStatus() {
@@ -1455,7 +1628,7 @@ function initializeModerationPage() {
         logoutButton.addEventListener("click", () => {
             clearAdminAuthSession();
             renderAdminAuthStatus();
-            alert("JWT admin session cleared.");
+            redirectToAdminLogin("You have been logged out.");
         });
     }
 
@@ -1603,7 +1776,7 @@ function initializeAdminLoginPage() {
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const email = String(emailInput.value || "").trim().toLowerCase();
-                redirectToAdminLogin("You have been logged out.");
+        const password = String(passwordInput.value || "");
 
         if (!email || !password) {
             statusNode.textContent = "Email and password are required.";
@@ -1643,6 +1816,12 @@ function initializeNewsManagementPage() {
         return;
     }
 
+    if (!enforceAdminAccessOnLoad()) {
+        return;
+    }
+
+    const cancelEditButton = document.getElementById("cancelNewsEditButton");
+
     if (refreshButton) {
         refreshButton.addEventListener("click", () => {
             loadAdminNewsTable();
@@ -1673,7 +1852,20 @@ function initializeNewsManagementPage() {
         });
     }
 
+    if (cancelEditButton) {
+        cancelEditButton.addEventListener("click", () => {
+            resetNewsEditor();
+        });
+    }
+
     newsTableBody.addEventListener("click", async (event) => {
+        const editButton = event.target.closest("button[data-news-edit-id]");
+
+        if (editButton) {
+            beginNewsEdit(editButton.getAttribute("data-news-edit-id"));
+            return;
+        }
+
         const button = event.target.closest("button[data-news-delete-id]");
 
         if (!button) {
@@ -1719,6 +1911,12 @@ function initializeVideosManagementPage() {
     if (!tableBody) {
         return;
     }
+
+    if (!enforceAdminAccessOnLoad()) {
+        return;
+    }
+
+    const cancelEditButton = document.getElementById("cancelVideoEditButton");
 
     if (refreshButton) {
         refreshButton.addEventListener("click", () => {
@@ -1774,7 +1972,20 @@ function initializeVideosManagementPage() {
         });
     }
 
+    if (cancelEditButton) {
+        cancelEditButton.addEventListener("click", () => {
+            resetVideoEditor();
+        });
+    }
+
     tableBody.addEventListener("click", async (event) => {
+        const editButton = event.target.closest("button[data-video-edit-id]");
+
+        if (editButton) {
+            beginVideoEdit(editButton.getAttribute("data-video-edit-id"));
+            return;
+        }
+
         const button = event.target.closest("button[data-video-delete-id]");
 
         if (!button) {
@@ -1817,6 +2028,10 @@ function initializeUsersManagementPage() {
     const newUserPassword = document.getElementById("newUserPassword");
 
     if (!tableBody) {
+        return;
+    }
+
+    if (!enforceAdminAccessOnLoad()) {
         return;
     }
 
@@ -2034,6 +2249,13 @@ async function initializeHomePage() {
     await refreshEngagementWidgets();
 }
 
+function initializeAdminRouteProtection() {
+    enforceAdminAccessOnLoad({
+        allowLegacyKey: String(window.location.pathname || "").toLowerCase().endsWith("comments.html")
+    });
+}
+
+window.addEventListener("load", initializeAdminRouteProtection);
 window.addEventListener("load", loadNews);
 window.addEventListener("load", loadVideos);
 window.addEventListener("load", loadLiveTV);

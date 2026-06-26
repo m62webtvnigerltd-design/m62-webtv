@@ -192,8 +192,12 @@ button:hover{
 
 <p class="hint">Tip: Login first from admin/login.html (or use legacy Admin API key in comments page).</p>
 
-<button onclick="publishNews()">
+<button id="publishNewsButton" onclick="publishNews()">
     Publish News
+</button>
+
+<button type="button" id="cancelNewsEditButton" style="display:none; margin-left:10px; background:#5f6b77;">
+    Cancel Edit
 </button>
 
 </div>

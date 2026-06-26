@@ -1749,6 +1749,75 @@ app.post('/api/videos', requireMongo, requireAdminAccess, validateVideoPayload, 
     }
 });
 
+app.patch('/api/videos/:id', requireMongo, requireAdminAccess, validateVideoPayload, async (req, res, next) => {
+    try {
+        const id = String(req.params.id || '').trim();
+
+        if (!validator.isMongoId(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid video id'
+            });
+        }
+
+        const doc = await VideoModel.findOne({ _id: id, deletedAt: null });
+
+        if (!doc) {
+            return res.status(404).json({
+                success: false,
+                message: 'Video not found'
+            });
+        }
+
+        const baseSlug = req.body.slug
+            ? slugifyTitle(req.body.slug)
+            : slugifyTitle(req.body.title);
+        let slug = baseSlug;
+        let suffix = 1;
+
+        while (await VideoModel.exists({ _id: { $ne: doc._id }, slug })) {
+            suffix += 1;
+            slug = `${baseSlug}-${suffix}`;
+        }
+
+        doc.title = req.body.title;
+        doc.slug = slug;
+        doc.description = req.body.description;
+        doc.category = req.body.category;
+        doc.videoUrl = req.body.videoUrl;
+        doc.thumbnailUrl = req.body.thumbnailUrl;
+        doc.sourceType = req.body.sourceType;
+        doc.status = req.body.status;
+        doc.featured = req.body.featured;
+        doc.updatedBy = 'admin';
+
+        if (doc.status === 'published' && !doc.publishedAt) {
+            doc.publishedAt = new Date();
+        }
+
+        if (doc.status === 'draft') {
+            doc.publishedAt = null;
+        }
+
+        await doc.save();
+
+        res.json({
+            success: true,
+            message: 'Video updated successfully',
+            data: mapVideo(doc.toObject())
+        });
+    } catch (error) {
+        if (error && error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: 'Slug already exists. Please try another title or slug.'
+            });
+        }
+
+        next(error);
+    }
+});
+
 app.delete('/api/videos/:id', requireMongo, requireAdminAccess, async (req, res, next) => {
     try {
         const id = String(req.params.id || '').trim();
