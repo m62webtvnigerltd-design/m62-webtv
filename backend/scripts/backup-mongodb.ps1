@@ -10,6 +10,27 @@ $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendDir = Split-Path -Parent $scriptDir
 
+$envFile = Join-Path $backendDir ".env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match '^[\s]*#' -or $_ -notmatch '=') {
+            return
+        }
+
+        $parts = $_ -split '=', 2
+        $key = $parts[0].Trim()
+        $value = $parts[1].Trim()
+
+        if ($key -eq 'MONGODB_URI' -and [string]::IsNullOrWhiteSpace($MongoUri)) {
+            $MongoUri = $value
+        }
+
+        if ($key -eq 'MONGODB_DB_NAME' -and [string]::IsNullOrWhiteSpace($DatabaseName)) {
+            $DatabaseName = $value
+        }
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
     $OutputRoot = Join-Path $backendDir "backups"
 }
@@ -24,7 +45,17 @@ if ([string]::IsNullOrWhiteSpace($MongoUri)) {
 
 $mongodump = Get-Command mongodump -ErrorAction SilentlyContinue
 if (-not $mongodump) {
-    throw "mongodump was not found in PATH. Install MongoDB Database Tools and retry."
+    $fallbackPaths = @(
+        "C:\Program Files\MongoDB\Tools\100\bin\mongodump.exe",
+        "C:\Program Files\MongoDB\Tools\bin\mongodump.exe"
+    )
+
+    $resolved = $fallbackPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($resolved) {
+        $mongodump = @{ Source = $resolved }
+    } else {
+        throw "mongodump was not found in PATH. Install MongoDB Database Tools and retry."
+    }
 }
 
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
