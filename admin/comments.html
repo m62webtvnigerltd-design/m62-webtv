@@ -36,6 +36,47 @@ h1{
     align-items:end;
 }
 
+.auth-bar{
+    background:#fff;
+    border-radius:10px;
+    padding:12px 16px;
+    margin-bottom:14px;
+    box-shadow:0 0 10px rgba(0,0,0,0.08);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+}
+
+.auth-bar .left{
+    color:#1f2a36;
+    font-size:14px;
+}
+
+.auth-bar .left strong{
+    color:#0b2d57;
+}
+
+.auth-bar .right{
+    display:flex;
+    gap:8px;
+}
+
+.auth-bar .right button,
+.auth-bar .right a{
+    width:auto;
+    padding:8px 12px;
+    border-radius:6px;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.auth-bar .right a{
+    background:#c0392b;
+    color:#fff;
+}
+
 .pagination-controls{
     display:flex;
     justify-content:space-between;
@@ -162,10 +203,18 @@ td button{
 
     <h1>Comments Moderation</h1>
 
+    <div class="auth-bar">
+        <div class="left" id="adminAuthStatus">Auth: <strong>Not logged in</strong></div>
+        <div class="right">
+            <a href="login.html">Go to Login</a>
+            <button type="button" id="logoutAdminSession">Logout Token</button>
+        </div>
+    </div>
+
     <div class="controls">
         <div>
-            <label for="adminApiKey">Admin API Key</label>
-            <input type="password" id="adminApiKey" placeholder="Enter ADMIN_API_KEY from backend .env">
+            <label for="adminApiKey">Legacy Admin API Key (optional)</label>
+            <input type="password" id="adminApiKey" placeholder="Optional fallback for old mode">
         </div>
 
         <div>

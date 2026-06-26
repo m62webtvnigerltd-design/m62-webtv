@@ -15,7 +15,7 @@ body{
 }
 
 .main-content{
-    max-width:800px;
+    max-width:1000px;
     margin:auto;
 }
 
@@ -29,6 +29,79 @@ h1{
     padding:25px;
     border-radius:10px;
     box-shadow:0 0 10px rgba(0,0,0,0.1);
+    margin-bottom:24px;
+}
+
+.row-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.news-list{
+    background:white;
+    padding:18px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.news-list-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+    gap:12px;
+}
+
+.news-list table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.news-list th,
+.news-list td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:left;
+    vertical-align:top;
+}
+
+.news-list th{
+    background:#c0392b;
+    color:white;
+}
+
+.hint{
+    font-size:13px;
+    color:#5f6b77;
+}
+
+.upload-row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+.upload-row input[type="file"]{
+    flex:1;
+}
+
+.upload-row button{
+    margin-top:0;
+    width:auto;
+    white-space:nowrap;
+}
+
+.upload-status{
+    margin-top:6px;
+    font-size:13px;
+    color:#5f6b77;
+}
+
+@media(max-width:800px){
+    .row-2{
+        grid-template-columns:1fr;
+    }
 }
 
 label{
@@ -87,19 +160,63 @@ button:hover{
 <label>News Title</label>
 <input type="text" id="newsTitle" placeholder="Enter News Title">
 
-<label>News Date</label>
-<input type="date" id="newsDate">
+<label>Summary</label>
+<textarea id="newsSummary" rows="3" placeholder="Short summary for homepage"></textarea>
 
-<label>Upload Image</label>
-<input type="file" id="newsImage">
+<div class="row-2">
+    <div>
+        <label>Category</label>
+        <input type="text" id="newsCategory" placeholder="Politics, Sports, Economy..." value="General">
+    </div>
+    <div>
+        <label>Status</label>
+        <select id="newsStatus">
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+        </select>
+    </div>
+</div>
+
+<label>Cover Image URL</label>
+<input type="url" id="newsCoverImage" placeholder="https://example.com/news-image.jpg">
+
+<label>Or Upload Cover Image</label>
+<div class="upload-row">
+    <input type="file" id="newsImageFile" accept="image/*">
+    <button type="button" id="uploadNewsImage">Upload Image</button>
+</div>
+<div class="upload-status" id="newsImageUploadStatus">No image uploaded yet.</div>
 
 <label>News Content</label>
 <textarea id="newsContent" rows="8" placeholder="Write your news here..."></textarea>
+
+<p class="hint">Tip: Login first from admin/login.html (or use legacy Admin API key in comments page).</p>
 
 <button onclick="publishNews()">
     Publish News
 </button>
 
+</div>
+
+<div class="news-list">
+    <div class="news-list-header">
+        <h2>Latest News Items</h2>
+        <button type="button" id="refreshNewsList">Refresh</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Published</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="adminNewsTableBody">
+            <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
+    </table>
 </div>
 
 </div>

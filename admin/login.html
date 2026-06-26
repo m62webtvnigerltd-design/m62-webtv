@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV - Admin Login</title>
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#021d3a,#0b2d57 60%,#c0392b);
+    font-family:Arial,sans-serif;
+}
+
+.panel{
+    width:min(460px,92vw);
+    background:#fff;
+    border-radius:16px;
+    padding:28px;
+    box-shadow:0 18px 40px rgba(0,0,0,.2);
+}
+
+h1{
+    margin:0 0 8px;
+    color:#021d3a;
+    font-size:28px;
+}
+
+.subtitle{
+    margin:0 0 20px;
+    color:#4a5560;
+}
+
+label{
+    display:block;
+    font-weight:bold;
+    margin:12px 0 6px;
+}
+
+input,
+button{
+    width:100%;
+    border-radius:8px;
+    box-sizing:border-box;
+}
+
+input{
+    border:1px solid #cfd7df;
+    padding:11px 12px;
+}
+
+button{
+    margin-top:16px;
+    border:none;
+    padding:12px;
+    font-weight:bold;
+    color:#fff;
+    background:#c0392b;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#a93226;
+}
+
+.status{
+    margin-top:14px;
+    min-height:22px;
+    font-size:14px;
+}
+
+.status.error{
+    color:#b00020;
+}
+
+.status.success{
+    color:#0b7a28;
+}
+
+.links{
+    margin-top:18px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.links a{
+    color:#021d3a;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+.links a:hover{
+    text-decoration:underline;
+}
+
+.helper{
+    margin-top:18px;
+    color:#5b6873;
+    font-size:13px;
+}
+</style>
+</head>
+<body>
+<div class="panel">
+    <h1>Admin Login</h1>
+    <p class="subtitle">Sign in with your MongoDB admin user.</p>
+
+    <form id="adminLoginForm">
+        <label for="adminLoginEmail">Email</label>
+        <input type="email" id="adminLoginEmail" autocomplete="username" required>
+
+        <label for="adminLoginPassword">Password</label>
+        <input type="password" id="adminLoginPassword" autocomplete="current-password" required>
+
+        <button type="submit" id="adminLoginSubmit">Sign In</button>
+    </form>
+
+    <div class="status" id="adminLoginStatus"></div>
+
+    <div class="links">
+        <a href="dashboard.html">Back to Dashboard</a>
+        <a href="comments.html">Open Moderation</a>
+    </div>
+
+    <p class="helper">Legacy mode still works with ADMIN_API_KEY in moderation page if needed.</p>
+</div>
+<script src="../js/main.js"></script>
+</body>
+</html>

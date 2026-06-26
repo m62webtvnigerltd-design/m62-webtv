@@ -3,6 +3,10 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
 const validator = require('validator');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -12,10 +16,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 const COMMENT_ARCHIVE_DAYS = Math.max(Number(process.env.COMMENT_ARCHIVE_DAYS || 180), 1);
+const MONGODB_URI = String(process.env.MONGODB_URI || '').trim();
+const MONGODB_DB_NAME = String(process.env.MONGODB_DB_NAME || '').trim();
+const MONGODB_INMEMORY_FALLBACK = toBoolean(process.env.MONGODB_INMEMORY_FALLBACK, true);
+const JWT_SECRET = String(process.env.JWT_SECRET || '').trim();
+const JWT_EXPIRES_IN = String(process.env.JWT_EXPIRES_IN || '7d').trim();
+const ADMIN_BOOTSTRAP_EMAIL = String(process.env.ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
+const ADMIN_BOOTSTRAP_PASSWORD = String(process.env.ADMIN_BOOTSTRAP_PASSWORD || '').trim();
+const UPLOAD_MAX_MB = Math.max(Number(process.env.UPLOAD_MAX_MB || 10), 1);
+const VIDEO_UPLOAD_MAX_MB = Math.max(Number(process.env.VIDEO_UPLOAD_MAX_MB || 200), 10);
 const DATA_DIR = path.join(__dirname, 'data');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const ENGAGEMENT_FILE = path.join(DATA_DIR, 'engagement.json');
 const BLOCKED_TERMS = ['spam', 'scam', 'fraud', 'casino', 'betting', 'porn'];
 const rateLimitStore = new Map();
+let mongoReady = false;
+let NewsModel = null;
+let UserModel = null;
+let VideoModel = null;
+let mongoMemoryServer = null;
 
 function getClientIp(req) {
     const forwarded = req.headers['x-forwarded-for'];
@@ -67,6 +86,439 @@ function makeId() {
     return typeof crypto.randomUUID === 'function'
         ? crypto.randomUUID()
         : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function slugifyTitle(value) {
+    const clean = validator.trim(String(value || '').toLowerCase());
+    const slug = clean
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return slug || `news-${Date.now()}`;
+}
+
+function toBoolean(value, defaultValue = false) {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+
+    if (typeof value === 'string') {
+        const lowered = value.trim().toLowerCase();
+        if (['1', 'true', 'yes', 'on'].includes(lowered)) {
+            return true;
+        }
+        if (['0', 'false', 'no', 'off'].includes(lowered)) {
+            return false;
+        }
+    }
+
+    return defaultValue;
+}
+
+function requireMongo(req, res, next) {
+    if (!mongoReady || !NewsModel || !UserModel || !VideoModel) {
+        return res.status(503).json({
+            success: false,
+            message: 'MongoDB is not configured or not connected'
+        });
+    }
+
+    next();
+}
+
+function ensureUploadsDirectory() {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+}
+
+function mapUser(doc) {
+    return {
+        id: String(doc._id),
+        name: doc.name,
+        email: doc.email,
+        role: doc.role,
+        isActive: Boolean(doc.isActive),
+        lastLoginAt: doc.lastLoginAt || null,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt
+    };
+}
+
+function createAuthToken(user) {
+    if (!JWT_SECRET) {
+        throw new Error('JWT_SECRET is not configured');
+    }
+
+    return jwt.sign(
+        {
+            sub: String(user._id),
+            email: user.email,
+            role: user.role,
+            name: user.name
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+    );
+}
+
+function requireJwtAuth(req, res, next) {
+    const authHeader = String(req.headers.authorization || '');
+
+    if (!authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication token required'
+        });
+    }
+
+    const token = authHeader.slice('Bearer '.length).trim();
+
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication token required'
+        });
+    }
+
+    if (!JWT_SECRET) {
+        return res.status(503).json({
+            success: false,
+            message: 'JWT is not configured on server'
+        });
+    }
+
+    try {
+        const payload = jwt.verify(token, JWT_SECRET);
+        req.authUser = payload;
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid or expired token'
+        });
+    }
+}
+
+function requireRole(allowedRoles) {
+    return (req, res, next) => {
+        const role = String(req.authUser?.role || '').toLowerCase();
+        if (!allowedRoles.includes(role)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Insufficient permissions'
+            });
+        }
+
+        next();
+    };
+}
+
+function requireAdminAccess(req, res, next) {
+    if (ADMIN_API_KEY && req.headers['x-admin-key'] === ADMIN_API_KEY) {
+        req.authUser = {
+            sub: 'legacy-admin-key',
+            email: 'legacy-admin-key',
+            role: 'admin',
+            name: 'Legacy Admin Key'
+        };
+        return next();
+    }
+
+    return requireJwtAuth(req, res, () => requireRole(['admin', 'editor'])(req, res, next));
+}
+
+async function ensureBootstrapAdmin() {
+    if (!mongoReady || !UserModel) {
+        return;
+    }
+
+    const usersCount = await UserModel.countDocuments();
+    if (usersCount > 0) {
+        return;
+    }
+
+    if (!ADMIN_BOOTSTRAP_EMAIL || !ADMIN_BOOTSTRAP_PASSWORD) {
+        console.log('⚠️ No bootstrap admin created: set ADMIN_BOOTSTRAP_EMAIL and ADMIN_BOOTSTRAP_PASSWORD');
+        return;
+    }
+
+    const passwordHash = await bcrypt.hash(ADMIN_BOOTSTRAP_PASSWORD, 12);
+
+    await UserModel.create({
+        name: 'Administrator',
+        email: ADMIN_BOOTSTRAP_EMAIL,
+        passwordHash,
+        role: 'admin',
+        isActive: true
+    });
+
+    console.log(`👤 Bootstrap admin created: ${ADMIN_BOOTSTRAP_EMAIL}`);
+}
+
+function mapNews(doc) {
+    return {
+        id: String(doc._id),
+        title: doc.title,
+        slug: doc.slug,
+        summary: doc.summary,
+        content: doc.content,
+        category: doc.category,
+        coverImageUrl: doc.coverImageUrl,
+        videoUrl: doc.videoUrl,
+        tags: doc.tags,
+        status: doc.status,
+        featured: Boolean(doc.featured),
+        publishedAt: doc.publishedAt,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt
+    };
+}
+
+function mapVideo(doc) {
+    return {
+        id: String(doc._id),
+        title: doc.title,
+        slug: doc.slug,
+        description: doc.description,
+        category: doc.category,
+        videoUrl: doc.videoUrl,
+        thumbnailUrl: doc.thumbnailUrl,
+        sourceType: doc.sourceType,
+        status: doc.status,
+        featured: Boolean(doc.featured),
+        publishedAt: doc.publishedAt,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt
+    };
+}
+
+function validateNewsPayload(req, res, next) {
+    const title = validator.trim(String(req.body.title || ''));
+    const summary = validator.trim(String(req.body.summary || ''));
+    const content = validator.trim(String(req.body.content || ''));
+    const category = validator.trim(String(req.body.category || 'General'));
+    const coverImageUrl = validator.trim(String(req.body.coverImageUrl || ''));
+    const videoUrl = validator.trim(String(req.body.videoUrl || ''));
+    const status = validator.trim(String(req.body.status || 'draft')).toLowerCase();
+    const tags = Array.isArray(req.body.tags)
+        ? req.body.tags.map((tag) => validator.trim(String(tag))).filter(Boolean).slice(0, 20)
+        : [];
+
+    if (!title || title.length < 5 || title.length > 180) {
+        return res.status(400).json({
+            success: false,
+            message: 'Title must be between 5 and 180 characters'
+        });
+    }
+
+    if (!summary || summary.length > 400) {
+        return res.status(400).json({
+            success: false,
+            message: 'Summary is required and must be 400 characters or less'
+        });
+    }
+
+    if (!content || content.length < 20) {
+        return res.status(400).json({
+            success: false,
+            message: 'Content must be at least 20 characters'
+        });
+    }
+
+    if (!['draft', 'published'].includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Status must be draft or published'
+        });
+    }
+
+    if (coverImageUrl && !validator.isURL(coverImageUrl, { require_protocol: true })) {
+        return res.status(400).json({
+            success: false,
+            message: 'coverImageUrl must be a valid absolute URL'
+        });
+    }
+
+    if (videoUrl && !validator.isURL(videoUrl, { require_protocol: true })) {
+        return res.status(400).json({
+            success: false,
+            message: 'videoUrl must be a valid absolute URL'
+        });
+    }
+
+    req.body.title = validator.escape(title);
+    req.body.summary = validator.escape(summary);
+    req.body.content = validator.escape(content);
+    req.body.category = validator.escape(category).slice(0, 60);
+    req.body.coverImageUrl = coverImageUrl;
+    req.body.videoUrl = videoUrl;
+    req.body.status = status;
+    req.body.featured = toBoolean(req.body.featured, false);
+    req.body.tags = tags.map((tag) => validator.escape(tag).slice(0, 40));
+    req.body.slug = validator.trim(String(req.body.slug || ''));
+
+    next();
+}
+
+function validateVideoPayload(req, res, next) {
+    const title = validator.trim(String(req.body.title || ''));
+    const description = validator.trim(String(req.body.description || ''));
+    const category = validator.trim(String(req.body.category || 'General'));
+    const status = validator.trim(String(req.body.status || 'draft')).toLowerCase();
+    const sourceType = validator.trim(String(req.body.sourceType || 'external')).toLowerCase();
+    const videoUrl = validator.trim(String(req.body.videoUrl || ''));
+    const thumbnailUrl = validator.trim(String(req.body.thumbnailUrl || ''));
+
+    if (!title || title.length < 3 || title.length > 180) {
+        return res.status(400).json({
+            success: false,
+            message: 'Video title must be between 3 and 180 characters'
+        });
+    }
+
+    if (!description || description.length > 500) {
+        return res.status(400).json({
+            success: false,
+            message: 'Description is required and must be 500 characters or less'
+        });
+    }
+
+    if (!['draft', 'published'].includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Status must be draft or published'
+        });
+    }
+
+    if (!['external', 'upload'].includes(sourceType)) {
+        return res.status(400).json({
+            success: false,
+            message: 'sourceType must be external or upload'
+        });
+    }
+
+    if (!videoUrl || !validator.isURL(videoUrl, { require_protocol: true })) {
+        return res.status(400).json({
+            success: false,
+            message: 'videoUrl must be a valid absolute URL'
+        });
+    }
+
+    if (thumbnailUrl && !validator.isURL(thumbnailUrl, { require_protocol: true })) {
+        return res.status(400).json({
+            success: false,
+            message: 'thumbnailUrl must be a valid absolute URL'
+        });
+    }
+
+    req.body.title = validator.escape(title);
+    req.body.description = validator.escape(description);
+    req.body.category = validator.escape(category).slice(0, 60);
+    req.body.status = status;
+    req.body.sourceType = sourceType;
+    req.body.videoUrl = videoUrl;
+    req.body.thumbnailUrl = thumbnailUrl;
+    req.body.featured = toBoolean(req.body.featured, false);
+    req.body.slug = validator.trim(String(req.body.slug || ''));
+
+    next();
+}
+
+function initMongoModels() {
+    const userSchema = new mongoose.Schema({
+        name: { type: String, required: true, trim: true, maxlength: 120 },
+        email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+        passwordHash: { type: String, required: true },
+        role: { type: String, enum: ['admin', 'editor', 'viewer'], default: 'editor' },
+        isActive: { type: Boolean, default: true },
+        lastLoginAt: { type: Date, default: null }
+    }, {
+        timestamps: true
+    });
+
+    const newsSchema = new mongoose.Schema({
+        title: { type: String, required: true, trim: true, minlength: 5, maxlength: 180 },
+        slug: { type: String, required: true, unique: true, trim: true, lowercase: true },
+        summary: { type: String, required: true, trim: true, maxlength: 400 },
+        content: { type: String, required: true, trim: true },
+        category: { type: String, default: 'General', trim: true, maxlength: 60 },
+        coverImageUrl: { type: String, default: '' },
+        videoUrl: { type: String, default: '' },
+        tags: { type: [String], default: [] },
+        status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+        featured: { type: Boolean, default: false },
+        publishedAt: { type: Date, default: null },
+        createdBy: { type: String, default: 'admin' },
+        updatedBy: { type: String, default: 'admin' },
+        deletedAt: { type: Date, default: null }
+    }, {
+        timestamps: true
+    });
+
+    newsSchema.index({ status: 1, deletedAt: 1, publishedAt: -1, createdAt: -1 });
+    newsSchema.index({ category: 1, deletedAt: 1, createdAt: -1 });
+
+    const videoSchema = new mongoose.Schema({
+        title: { type: String, required: true, trim: true, minlength: 3, maxlength: 180 },
+        slug: { type: String, required: true, unique: true, trim: true, lowercase: true },
+        description: { type: String, required: true, trim: true, maxlength: 500 },
+        category: { type: String, default: 'General', trim: true, maxlength: 60 },
+        videoUrl: { type: String, required: true },
+        thumbnailUrl: { type: String, default: '' },
+        sourceType: { type: String, enum: ['external', 'upload'], default: 'external' },
+        status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+        featured: { type: Boolean, default: false },
+        publishedAt: { type: Date, default: null },
+        createdBy: { type: String, default: 'admin' },
+        updatedBy: { type: String, default: 'admin' },
+        deletedAt: { type: Date, default: null }
+    }, {
+        timestamps: true
+    });
+
+    videoSchema.index({ status: 1, deletedAt: 1, publishedAt: -1, createdAt: -1 });
+    videoSchema.index({ category: 1, deletedAt: 1, createdAt: -1 });
+
+    UserModel = mongoose.models.User || mongoose.model('User', userSchema);
+    NewsModel = mongoose.models.News || mongoose.model('News', newsSchema);
+    VideoModel = mongoose.models.Video || mongoose.model('Video', videoSchema);
+}
+
+async function connectMongoIfConfigured() {
+    if (!MONGODB_URI) {
+        if (!MONGODB_INMEMORY_FALLBACK) {
+            console.log('⚠️ MongoDB disabled: MONGODB_URI is not set and fallback is disabled');
+            mongoReady = false;
+            return;
+        }
+
+        console.log('ℹ️ MONGODB_URI not set. Starting in-memory MongoDB fallback...');
+        const { MongoMemoryServer } = require('mongodb-memory-server');
+        mongoMemoryServer = await MongoMemoryServer.create();
+        const inMemoryUri = mongoMemoryServer.getUri();
+
+        await mongoose.connect(inMemoryUri, {
+            dbName: MONGODB_DB_NAME || 'm62_webtv_local',
+            autoIndex: true
+        });
+
+        initMongoModels();
+        mongoReady = true;
+        console.log('🧪 In-memory MongoDB fallback enabled');
+        return;
+    }
+
+    await mongoose.connect(MONGODB_URI, {
+        dbName: MONGODB_DB_NAME || undefined,
+        autoIndex: true
+    });
+
+    initMongoModels();
+    mongoReady = true;
+    console.log(`🗄️ MongoDB connected${MONGODB_DB_NAME ? ` (${MONGODB_DB_NAME})` : ''}`);
 }
 
 function requireAdminKey(req, res, next) {
@@ -314,6 +766,50 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+ensureUploadsDirectory();
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+const uploadStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, UPLOADS_DIR);
+    },
+    filename: (req, file, cb) => {
+        const extension = path.extname(file.originalname || '').toLowerCase();
+        const safeExtension = extension && extension.length <= 10 ? extension : '.jpg';
+        const unique = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        cb(null, `img_${unique}${safeExtension}`);
+    }
+});
+
+const uploadImageMiddleware = multer({
+    storage: uploadStorage,
+    limits: {
+        fileSize: UPLOAD_MAX_MB * 1024 * 1024
+    },
+    fileFilter: (req, file, cb) => {
+        const mimeType = String(file.mimetype || '').toLowerCase();
+        if (!mimeType.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed'));
+        }
+
+        cb(null, true);
+    }
+});
+
+const uploadVideoMiddleware = multer({
+    storage: uploadStorage,
+    limits: {
+        fileSize: VIDEO_UPLOAD_MAX_MB * 1024 * 1024
+    },
+    fileFilter: (req, file, cb) => {
+        const mimeType = String(file.mimetype || '').toLowerCase();
+        if (!mimeType.startsWith('video/')) {
+            return cb(new Error('Only video files are allowed'));
+        }
+
+        cb(null, true);
+    }
+});
 
 // Email configuration
 const transporter = nodemailer.createTransport({
@@ -439,6 +935,739 @@ app.post('/api/test-email', async (req, res) => {
     }
 });
 
+app.post('/api/uploads/image', requireAdminAccess, (req, res, next) => {
+    uploadImageMiddleware.single('image')(req, res, (error) => {
+        if (error) {
+            if (error.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({
+                    success: false,
+                    message: `Image is too large. Maximum size is ${UPLOAD_MAX_MB}MB`
+                });
+            }
+
+            return res.status(400).json({
+                success: false,
+                message: error.message || 'Image upload failed'
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Image file is required'
+            });
+        }
+
+        const relativeUrl = `/uploads/${req.file.filename}`;
+        const absoluteUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+
+        res.status(201).json({
+            success: true,
+            message: 'Image uploaded successfully',
+            data: {
+                fileName: req.file.filename,
+                mimeType: req.file.mimetype,
+                size: req.file.size,
+                url: absoluteUrl,
+                relativeUrl
+            }
+        });
+    });
+});
+
+app.post('/api/uploads/video', requireAdminAccess, (req, res, next) => {
+    uploadVideoMiddleware.single('video')(req, res, (error) => {
+        if (error) {
+            if (error.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({
+                    success: false,
+                    message: `Video is too large. Maximum size is ${VIDEO_UPLOAD_MAX_MB}MB`
+                });
+            }
+
+            return res.status(400).json({
+                success: false,
+                message: error.message || 'Video upload failed'
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Video file is required'
+            });
+        }
+
+        const relativeUrl = `/uploads/${req.file.filename}`;
+        const absoluteUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+
+        res.status(201).json({
+            success: true,
+            message: 'Video uploaded successfully',
+            data: {
+                fileName: req.file.filename,
+                mimeType: req.file.mimetype,
+                size: req.file.size,
+                url: absoluteUrl,
+                relativeUrl
+            }
+        });
+    });
+});
+
+// Authentication endpoints
+app.post('/api/auth/login', createRateLimiter(60 * 1000, 12), requireMongo, async (req, res, next) => {
+    try {
+        const email = validator.trim(String(req.body.email || '')).toLowerCase();
+        const password = String(req.body.password || '');
+
+        if (!validator.isEmail(email) || password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email or password format'
+            });
+        }
+
+        const user = await UserModel.findOne({ email, isActive: true });
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or password'
+            });
+        }
+
+        const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+
+        if (!passwordMatches) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or password'
+            });
+        }
+
+        user.lastLoginAt = new Date();
+        await user.save();
+
+        const token = createAuthToken(user);
+
+        res.json({
+            success: true,
+            message: 'Login successful',
+            data: {
+                token,
+                user: mapUser(user)
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get('/api/auth/me', requireMongo, requireJwtAuth, async (req, res, next) => {
+    try {
+        const userId = String(req.authUser?.sub || '');
+        if (!validator.isMongoId(userId)) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid token payload'
+            });
+        }
+
+        const user = await UserModel.findOne({ _id: userId, isActive: true });
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not found or inactive'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: mapUser(user)
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get('/api/auth/users', requireMongo, requireJwtAuth, requireRole(['admin']), async (req, res, next) => {
+    try {
+        const q = validator.trim(String(req.query.q || '')).toLowerCase();
+        const role = validator.trim(String(req.query.role || '')).toLowerCase();
+        const status = validator.trim(String(req.query.status || '')).toLowerCase();
+        const page = Math.max(Number(req.query.page || 1), 1);
+        const pageSize = Math.min(Math.max(Number(req.query.pageSize || 25), 1), 100);
+
+        const filter = {};
+
+        if (q) {
+            filter.$or = [
+                { name: { $regex: q, $options: 'i' } },
+                { email: { $regex: q, $options: 'i' } }
+            ];
+        }
+
+        if (['admin', 'editor', 'viewer'].includes(role)) {
+            filter.role = role;
+        }
+
+        if (status === 'active') {
+            filter.isActive = true;
+        }
+
+        if (status === 'inactive') {
+            filter.isActive = false;
+        }
+
+        const totalItems = await UserModel.countDocuments(filter);
+        const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * pageSize;
+
+        const users = await UserModel.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(pageSize);
+
+        res.json({
+            success: true,
+            data: users.map(mapUser),
+            meta: {
+                page: safePage,
+                pageSize,
+                totalItems,
+                totalPages,
+                hasPrev: safePage > 1,
+                hasNext: safePage < totalPages
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/auth/users', requireMongo, requireJwtAuth, requireRole(['admin']), async (req, res, next) => {
+    try {
+        const name = validator.trim(String(req.body.name || ''));
+        const email = validator.trim(String(req.body.email || '')).toLowerCase();
+        const password = String(req.body.password || '');
+        const role = validator.trim(String(req.body.role || 'editor')).toLowerCase();
+
+        if (!name || name.length < 2 || name.length > 120) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name must be between 2 and 120 characters'
+            });
+        }
+
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email address'
+            });
+        }
+
+        if (password.length < 8 || password.length > 128) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be between 8 and 128 characters'
+            });
+        }
+
+        if (!['admin', 'editor', 'viewer'].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Role must be admin, editor, or viewer'
+            });
+        }
+
+        const exists = await UserModel.exists({ email });
+        if (exists) {
+            return res.status(409).json({
+                success: false,
+                message: 'User with this email already exists'
+            });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 12);
+        const user = await UserModel.create({
+            name: validator.escape(name),
+            email,
+            passwordHash,
+            role,
+            isActive: true
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'User created successfully',
+            data: mapUser(user)
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.patch('/api/auth/users/:id', requireMongo, requireJwtAuth, requireRole(['admin']), async (req, res, next) => {
+    try {
+        const id = String(req.params.id || '').trim();
+
+        if (!validator.isMongoId(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid user id'
+            });
+        }
+
+        const user = await UserModel.findById(id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const currentUserId = String(req.authUser?.sub || '');
+        const nextName = req.body.name === undefined ? user.name : validator.trim(String(req.body.name || ''));
+        const nextRole = req.body.role === undefined ? user.role : validator.trim(String(req.body.role || '')).toLowerCase();
+        const nextIsActive = req.body.isActive === undefined ? user.isActive : toBoolean(req.body.isActive, true);
+
+        if (!nextName || nextName.length < 2 || nextName.length > 120) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name must be between 2 and 120 characters'
+            });
+        }
+
+        if (!['admin', 'editor', 'viewer'].includes(nextRole)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Role must be admin, editor, or viewer'
+            });
+        }
+
+        if (String(user._id) === currentUserId && !nextIsActive) {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot deactivate your own account'
+            });
+        }
+
+        user.name = validator.escape(nextName);
+        user.role = nextRole;
+        user.isActive = nextIsActive;
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'User updated successfully',
+            data: mapUser(user)
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.patch('/api/auth/users/:id/password', requireMongo, requireJwtAuth, requireRole(['admin']), async (req, res, next) => {
+    try {
+        const id = String(req.params.id || '').trim();
+        const password = String(req.body.password || '');
+
+        if (!validator.isMongoId(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid user id'
+            });
+        }
+
+        if (password.length < 8 || password.length > 128) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be between 8 and 128 characters'
+            });
+        }
+
+        const user = await UserModel.findById(id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        user.passwordHash = await bcrypt.hash(password, 12);
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Password updated successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// News CRUD endpoints (MongoDB)
+app.get('/api/news', requireMongo, async (req, res, next) => {
+    try {
+        const page = Math.max(Number(req.query.page || 1), 1);
+        const pageSize = Math.min(Math.max(Number(req.query.pageSize || 10), 1), 100);
+        const status = String(req.query.status || 'published').toLowerCase();
+        const category = validator.trim(String(req.query.category || ''));
+        const query = validator.trim(String(req.query.q || ''));
+
+        const filter = { deletedAt: null };
+        if (status === 'draft' || status === 'published') {
+            filter.status = status;
+        }
+        if (category) {
+            filter.category = category;
+        }
+        if (query) {
+            filter.$or = [
+                { title: { $regex: query, $options: 'i' } },
+                { summary: { $regex: query, $options: 'i' } },
+                { content: { $regex: query, $options: 'i' } },
+                { tags: { $regex: query, $options: 'i' } }
+            ];
+        }
+
+        const totalItems = await NewsModel.countDocuments(filter);
+        const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * pageSize;
+
+        const docs = await NewsModel.find(filter)
+            .sort({ publishedAt: -1, createdAt: -1 })
+            .skip(skip)
+            .limit(pageSize)
+            .lean();
+
+        res.json({
+            success: true,
+            data: docs.map(mapNews),
+            meta: {
+                page: safePage,
+                pageSize,
+                totalItems,
+                totalPages,
+                hasPrev: safePage > 1,
+                hasNext: safePage < totalPages
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get('/api/news/:idOrSlug', requireMongo, async (req, res, next) => {
+    try {
+        const idOrSlug = String(req.params.idOrSlug || '').trim();
+        let doc = null;
+
+        if (validator.isMongoId(idOrSlug)) {
+            doc = await NewsModel.findOne({ _id: idOrSlug, deletedAt: null }).lean();
+        }
+
+        if (!doc) {
+            doc = await NewsModel.findOne({ slug: idOrSlug.toLowerCase(), deletedAt: null }).lean();
+        }
+
+        if (!doc) {
+            return res.status(404).json({
+                success: false,
+                message: 'News not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: mapNews(doc)
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/news', requireMongo, requireAdminAccess, validateNewsPayload, async (req, res, next) => {
+    try {
+        const baseSlug = req.body.slug ? slugifyTitle(req.body.slug) : slugifyTitle(req.body.title);
+        let slug = baseSlug;
+        let suffix = 1;
+
+        while (await NewsModel.exists({ slug })) {
+            suffix += 1;
+            slug = `${baseSlug}-${suffix}`;
+        }
+
+        const shouldPublish = req.body.status === 'published';
+        const doc = await NewsModel.create({
+            title: req.body.title,
+            slug,
+            summary: req.body.summary,
+            content: req.body.content,
+            category: req.body.category,
+            coverImageUrl: req.body.coverImageUrl,
+            videoUrl: req.body.videoUrl,
+            tags: req.body.tags,
+            status: req.body.status,
+            featured: req.body.featured,
+            publishedAt: shouldPublish ? new Date() : null,
+            createdBy: 'admin',
+            updatedBy: 'admin'
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'News created successfully',
+            data: mapNews(doc.toObject())
+        });
+    } catch (error) {
+        if (error && error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: 'Slug already exists. Please try another title or slug.'
+            });
+        }
+
+        next(error);
+    }
+});
+
+app.patch('/api/news/:id', requireMongo, requireAdminAccess, validateNewsPayload, async (req, res, next) => {
+    try {
+        const id = String(req.params.id || '').trim();
+
+        if (!validator.isMongoId(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid news id'
+            });
+        }
+
+        const doc = await NewsModel.findOne({ _id: id, deletedAt: null });
+
+        if (!doc) {
+            return res.status(404).json({
+                success: false,
+                message: 'News not found'
+            });
+        }
+
+        const baseSlug = req.body.slug
+            ? slugifyTitle(req.body.slug)
+            : slugifyTitle(req.body.title);
+        let slug = baseSlug;
+        let suffix = 1;
+
+        while (await NewsModel.exists({ _id: { $ne: doc._id }, slug })) {
+            suffix += 1;
+            slug = `${baseSlug}-${suffix}`;
+        }
+
+        doc.title = req.body.title;
+        doc.slug = slug;
+        doc.summary = req.body.summary;
+        doc.content = req.body.content;
+        doc.category = req.body.category;
+        doc.coverImageUrl = req.body.coverImageUrl;
+        doc.videoUrl = req.body.videoUrl;
+        doc.tags = req.body.tags;
+        doc.status = req.body.status;
+        doc.featured = req.body.featured;
+        doc.updatedBy = 'admin';
+
+        if (doc.status === 'published' && !doc.publishedAt) {
+            doc.publishedAt = new Date();
+        }
+
+        if (doc.status === 'draft') {
+            doc.publishedAt = null;
+        }
+
+        await doc.save();
+
+        res.json({
+            success: true,
+            message: 'News updated successfully',
+            data: mapNews(doc.toObject())
+        });
+    } catch (error) {
+        if (error && error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: 'Slug already exists. Please try another title or slug.'
+            });
+        }
+
+        next(error);
+    }
+});
+
+app.delete('/api/news/:id', requireMongo, requireAdminAccess, async (req, res, next) => {
+    try {
+        const id = String(req.params.id || '').trim();
+
+        if (!validator.isMongoId(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid news id'
+            });
+        }
+
+        const doc = await NewsModel.findOne({ _id: id, deletedAt: null });
+
+        if (!doc) {
+            return res.status(404).json({
+                success: false,
+                message: 'News not found'
+            });
+        }
+
+        doc.deletedAt = new Date();
+        doc.updatedBy = 'admin';
+        await doc.save();
+
+        res.json({
+            success: true,
+            message: 'News deleted successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Video CRUD endpoints (MongoDB)
+app.get('/api/videos', requireMongo, async (req, res, next) => {
+    try {
+        const page = Math.max(Number(req.query.page || 1), 1);
+        const pageSize = Math.min(Math.max(Number(req.query.pageSize || 10), 1), 100);
+        const status = String(req.query.status || 'published').toLowerCase();
+        const category = validator.trim(String(req.query.category || ''));
+        const query = validator.trim(String(req.query.q || ''));
+
+        const filter = { deletedAt: null };
+        if (status === 'draft' || status === 'published') {
+            filter.status = status;
+        }
+        if (category) {
+            filter.category = category;
+        }
+        if (query) {
+            filter.$or = [
+                { title: { $regex: query, $options: 'i' } },
+                { description: { $regex: query, $options: 'i' } },
+                { category: { $regex: query, $options: 'i' } }
+            ];
+        }
+
+        const totalItems = await VideoModel.countDocuments(filter);
+        const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * pageSize;
+
+        const docs = await VideoModel.find(filter)
+            .sort({ publishedAt: -1, createdAt: -1 })
+            .skip(skip)
+            .limit(pageSize)
+            .lean();
+
+        res.json({
+            success: true,
+            data: docs.map(mapVideo),
+            meta: {
+                page: safePage,
+                pageSize,
+                totalItems,
+                totalPages,
+                hasPrev: safePage > 1,
+                hasNext: safePage < totalPages
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/videos', requireMongo, requireAdminAccess, validateVideoPayload, async (req, res, next) => {
+    try {
+        const baseSlug = req.body.slug ? slugifyTitle(req.body.slug) : slugifyTitle(req.body.title);
+        let slug = baseSlug;
+        let suffix = 1;
+
+        while (await VideoModel.exists({ slug })) {
+            suffix += 1;
+            slug = `${baseSlug}-${suffix}`;
+        }
+
+        const shouldPublish = req.body.status === 'published';
+        const doc = await VideoModel.create({
+            title: req.body.title,
+            slug,
+            description: req.body.description,
+            category: req.body.category,
+            videoUrl: req.body.videoUrl,
+            thumbnailUrl: req.body.thumbnailUrl,
+            sourceType: req.body.sourceType,
+            status: req.body.status,
+            featured: req.body.featured,
+            publishedAt: shouldPublish ? new Date() : null,
+            createdBy: 'admin',
+            updatedBy: 'admin'
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Video created successfully',
+            data: mapVideo(doc.toObject())
+        });
+    } catch (error) {
+        if (error && error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: 'Slug already exists. Please try another title or slug.'
+            });
+        }
+
+        next(error);
+    }
+});
+
+app.delete('/api/videos/:id', requireMongo, requireAdminAccess, async (req, res, next) => {
+    try {
+        const id = String(req.params.id || '').trim();
+
+        if (!validator.isMongoId(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid video id'
+            });
+        }
+
+        const doc = await VideoModel.findOne({ _id: id, deletedAt: null });
+
+        if (!doc) {
+            return res.status(404).json({
+                success: false,
+                message: 'Video not found'
+            });
+        }
+
+        doc.deletedAt = new Date();
+        doc.updatedBy = 'admin';
+        await doc.save();
+
+        res.json({
+            success: true,
+            message: 'Video deleted successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 // Engagement endpoints (comments + ratings)
 app.get('/api/engagement/:itemType(news|video)/:itemId', validateItemParams, (req, res) => {
     const { itemType, itemId } = req.params;
@@ -539,7 +1768,7 @@ app.post('/api/engagement/:itemType(news|video)/:itemId/ratings', createRateLimi
     });
 });
 
-app.get('/api/engagement/moderation/comments', requireAdminKey, (req, res) => {
+app.get('/api/engagement/moderation/comments', requireAdminAccess, (req, res) => {
     const status = String(req.query.status || 'all');
     const itemTypeFilter = String(req.query.itemType || '');
     const itemIdFilter = String(req.query.itemId || '');
@@ -576,7 +1805,7 @@ app.get('/api/engagement/moderation/comments', requireAdminKey, (req, res) => {
     });
 });
 
-app.get('/api/engagement/moderation/comments/export.csv', requireAdminKey, (req, res) => {
+app.get('/api/engagement/moderation/comments/export.csv', requireAdminAccess, (req, res) => {
     const status = String(req.query.status || 'all');
     const itemTypeFilter = String(req.query.itemType || '');
     const itemIdFilter = String(req.query.itemId || '');
@@ -621,7 +1850,7 @@ app.get('/api/engagement/moderation/comments/export.csv', requireAdminKey, (req,
     res.send(csv);
 });
 
-app.patch('/api/engagement/moderation/comments/bulk', requireAdminKey, (req, res) => {
+app.patch('/api/engagement/moderation/comments/bulk', requireAdminAccess, (req, res) => {
     const action = String(req.body.action || '').toLowerCase();
     const items = Array.isArray(req.body.items) ? req.body.items : [];
 
@@ -711,7 +1940,7 @@ app.patch('/api/engagement/moderation/comments/bulk', requireAdminKey, (req, res
     });
 });
 
-app.patch('/api/engagement/:itemType(news|video)/:itemId/comments/:commentId', requireAdminKey, validateItemParams, (req, res) => {
+app.patch('/api/engagement/:itemType(news|video)/:itemId/comments/:commentId', requireAdminAccess, validateItemParams, (req, res) => {
     const { itemType, itemId, commentId } = req.params;
     const action = String(req.body.action || '').toLowerCase();
 
@@ -766,11 +1995,39 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+async function startServer() {
     const { archivedCount } = readAndArchiveStore();
-    console.log(`\n🚀 M62 WEB TV Backend Server running on http://localhost:${PORT}`);
-    console.log(`📧 Email Service: ${process.env.EMAIL_SERVICE || 'gmail'}`);
-    console.log(`🔗 Contact API: http://localhost:${PORT}/api/contact\n`);
-    console.log(`💬 Engagement API: http://localhost:${PORT}/api/engagement/news/1\n`);
-    console.log(`🗂️ Auto-archive: ${COMMENT_ARCHIVE_DAYS} days (archived on start: ${archivedCount})\n`);
+
+    try {
+        await connectMongoIfConfigured();
+        await ensureBootstrapAdmin();
+    } catch (error) {
+        mongoReady = false;
+        console.error('❌ MongoDB connection failed:', error.message);
+    }
+
+    app.listen(PORT, () => {
+        console.log(`\n🚀 M62 WEB TV Backend Server running on http://localhost:${PORT}`);
+        console.log(`📧 Email Service: ${process.env.EMAIL_SERVICE || 'gmail'}`);
+        console.log(`🔗 Contact API: http://localhost:${PORT}/api/contact\n`);
+        console.log(`💬 Engagement API: http://localhost:${PORT}/api/engagement/news/1\n`);
+        console.log(`🗂️ Auto-archive: ${COMMENT_ARCHIVE_DAYS} days (archived on start: ${archivedCount})\n`);
+        console.log(`📰 News API: http://localhost:${PORT}/api/news (MongoDB ${mongoReady ? 'enabled' : 'disabled'})\n`);
+    });
+}
+
+startServer();
+
+process.on('SIGINT', async () => {
+    if (mongoMemoryServer) {
+        await mongoMemoryServer.stop();
+    }
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    if (mongoMemoryServer) {
+        await mongoMemoryServer.stop();
+    }
+    process.exit(0);
 });

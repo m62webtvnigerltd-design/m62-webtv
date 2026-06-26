@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M62 WEB TV - User Management</title>
+<style>
+body{
+	font-family:Arial,sans-serif;
+	background:#f4f4f4;
+	margin:0;
+	padding:40px;
+}
+
+.main-content{
+	max-width:1100px;
+	margin:auto;
+}
+
+h1{
+	color:#c0392b;
+	text-align:center;
+	margin-bottom:20px;
+}
+
+.card{
+	background:#fff;
+	border-radius:10px;
+	box-shadow:0 0 10px rgba(0,0,0,0.08);
+	padding:20px;
+	margin-bottom:18px;
+}
+
+.row-2{
+	display:grid;
+	grid-template-columns:1fr 1fr;
+	gap:12px;
+}
+
+.row-4{
+	display:grid;
+	grid-template-columns:2fr 1fr 1fr auto;
+	gap:10px;
+	align-items:end;
+}
+
+label{
+	display:block;
+	font-weight:bold;
+	margin-top:10px;
+	margin-bottom:6px;
+}
+
+input,
+select,
+button{
+	width:100%;
+	border:1px solid #ccd2d8;
+	border-radius:6px;
+	box-sizing:border-box;
+	padding:10px;
+}
+
+button{
+	border:none;
+	background:#c0392b;
+	color:#fff;
+	cursor:pointer;
+	font-weight:bold;
+}
+
+button:hover{
+	background:#a93226;
+}
+
+table{
+	width:100%;
+	border-collapse:collapse;
+	background:#fff;
+}
+
+th,
+td{
+	border:1px solid #ddd;
+	padding:10px;
+	text-align:left;
+	vertical-align:top;
+}
+
+th{
+	background:#c0392b;
+	color:#fff;
+}
+
+.back-btn{
+	display:inline-block;
+	margin-bottom:12px;
+	color:#c0392b;
+	font-weight:bold;
+	text-decoration:none;
+}
+
+.muted{
+	font-size:13px;
+	color:#5f6b77;
+}
+
+.user-actions{
+	display:flex;
+	gap:6px;
+	flex-wrap:wrap;
+}
+
+.user-actions button{
+	width:auto;
+	padding:7px 10px;
+	font-size:12px;
+}
+
+@media(max-width:920px){
+	.row-4{
+		grid-template-columns:1fr;
+	}
+
+	.row-2{
+		grid-template-columns:1fr;
+	}
+}
+</style>
+</head>
+<body>
+<div class="main-content">
+	<a href="dashboard.html" class="back-btn">← Back To Dashboard</a>
+
+	<h1>User Management</h1>
+
+	<div class="card">
+		<h2>Create User</h2>
+		<p class="muted">Only admin role can create new users.</p>
+		<div class="row-2">
+			<div>
+				<label for="newUserName">Full Name</label>
+				<input type="text" id="newUserName" placeholder="e.g. M62 Editor">
+			</div>
+			<div>
+				<label for="newUserEmail">Email</label>
+				<input type="email" id="newUserEmail" placeholder="user@example.com">
+			</div>
+		</div>
+		<div class="row-2">
+			<div>
+				<label for="newUserRole">Role</label>
+				<select id="newUserRole">
+					<option value="editor">Editor</option>
+					<option value="viewer">Viewer</option>
+					<option value="admin">Admin</option>
+				</select>
+			</div>
+			<div>
+				<label for="newUserPassword">Temporary Password</label>
+				<input type="password" id="newUserPassword" placeholder="Minimum 8 characters">
+			</div>
+		</div>
+		<button type="button" id="createUserBtn">Create User</button>
+	</div>
+
+	<div class="card">
+		<h2>Users</h2>
+		<div class="row-4">
+			<div>
+				<label for="usersSearch">Search</label>
+				<input type="text" id="usersSearch" placeholder="Search by name or email">
+			</div>
+			<div>
+				<label for="usersRoleFilter">Role</label>
+				<select id="usersRoleFilter">
+					<option value="">All</option>
+					<option value="admin">Admin</option>
+					<option value="editor">Editor</option>
+					<option value="viewer">Viewer</option>
+				</select>
+			</div>
+			<div>
+				<label for="usersStatusFilter">Status</label>
+				<select id="usersStatusFilter">
+					<option value="">All</option>
+					<option value="active">Active</option>
+					<option value="inactive">Inactive</option>
+				</select>
+			</div>
+			<button type="button" id="refreshUsersBtn">Refresh</button>
+		</div>
+
+		<table>
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Email</th>
+					<th>Role</th>
+					<th>Status</th>
+					<th>Last Login</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody id="usersTableBody">
+				<tr><td colspan="6">Loading users...</td></tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+<script src="../js/main.js"></script>
+</body>
+</html>

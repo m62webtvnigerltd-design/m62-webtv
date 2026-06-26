@@ -58,6 +58,39 @@ function writeStore(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
 }
 
+function getVisitorCount() {
+    return Number(localStorage.getItem("m62VisitorCount") || "0");
+}
+
+function updateDashboardVisitorCount() {
+    const totalVisitors = document.getElementById("totalVisitors");
+
+    if (totalVisitors) {
+        totalVisitors.innerText = String(getVisitorCount());
+    }
+}
+
+function incrementVisitorCounterIfPublicPage() {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    const path = String(window.location.pathname || "").toLowerCase();
+    const isAdminPage = path.includes("/admin/");
+
+    if (isAdminPage) {
+        return;
+    }
+
+    const sessionKey = "m62VisitorCounted";
+    if (sessionStorage.getItem(sessionKey) === "1") {
+        return;
+    }
+
+    localStorage.setItem("m62VisitorCount", String(getVisitorCount() + 1));
+    sessionStorage.setItem(sessionKey, "1");
+}
+
 function ensureContentIds() {
     const news = readStore("news", []);
     const videos = readStore("videos", []);
@@ -127,32 +160,181 @@ async function parseApiError(response, fallbackMessage) {
     return new ApiError(message, response.status, retryAfterSeconds);
 }
 
-function publishNews() {
-    const title = document.getElementById("newsTitle").value;
-    const date = document.getElementById("newsDate").value;
-    const content = document.getElementById("newsContent").value;
+function normalizeLegacyNewsItem(item, index) {
+    const content = String(item.content || "").trim();
+    const summary = String(item.summary || content.slice(0, 180) || "No summary");
+    const id = item.id || `news_${index + 1}`;
+    return {
+        id,
+        title: String(item.title || "Untitled"),
+        slug: String(item.slug || id),
+        summary,
+        content,
+        category: String(item.category || "General"),
+        coverImageUrl: String(item.coverImageUrl || ""),
+        status: String(item.status || "published"),
+        publishedAt: item.publishedAt || item.date || null,
+        createdAt: item.createdAt || null,
+        updatedAt: item.updatedAt || null
+    };
+}
 
-    if (title === "" || date === "" || content === "") {
-        alert("Please fill all fields");
+async function fetchNewsList(options = {}) {
+    const {
+        status = "published",
+        page = 1,
+        pageSize = 20,
+        q = "",
+        category = ""
+    } = options;
+
+    try {
+        const params = new URLSearchParams({
+            status,
+            page: String(page),
+            pageSize: String(pageSize),
+            q: String(q || ""),
+            category: String(category || "")
+        });
+        const response = await fetch(`${API_BASE_URL}/api/news?${params.toString()}`);
+
+        if (!response.ok) {
+            throw new Error("News API request failed");
+        }
+
+        const payload = await response.json();
+        return {
+            data: Array.isArray(payload.data) ? payload.data : [],
+            meta: payload.meta || null,
+            source: "api"
+        };
+    } catch (error) {
+        const localNews = readStore("news", []).map(normalizeLegacyNewsItem);
+        const filtered = status === "all"
+            ? localNews
+            : localNews.filter((item) => item.status === status);
+
+        return {
+            data: filtered,
+            meta: null,
+            source: "fallback"
+        };
+    }
+}
+
+function formatNewsDate(value) {
+    if (!value) {
+        return "-";
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return "-";
+    }
+
+    return parsed.toLocaleDateString();
+}
+
+async function createNewsItem(payload) {
+    ensureAdminCredentialAvailable();
+
+    const response = await fetch(`${API_BASE_URL}/api/news`, {
+        method: "POST",
+        headers: buildAdminRequestHeaders(true),
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to create news item");
+    }
+
+    return response.json();
+}
+
+async function deleteNewsItem(newsId) {
+    ensureAdminCredentialAvailable();
+
+    const response = await fetch(`${API_BASE_URL}/api/news/${encodeURIComponent(newsId)}`, {
+        method: "DELETE",
+        headers: buildAdminRequestHeaders(false)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to delete news item");
+    }
+
+    return response.json();
+}
+
+async function uploadNewsImageFile(file) {
+    ensureAdminCredentialAvailable();
+
+    if (!file) {
+        throw new Error("Choose an image file first.");
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(`${API_BASE_URL}/api/uploads/image`, {
+        method: "POST",
+        headers: buildAdminRequestHeaders(false),
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Image upload failed");
+    }
+
+    const payload = await response.json();
+    return payload?.data || {};
+}
+
+async function publishNews() {
+    const title = String(document.getElementById("newsTitle")?.value || "").trim();
+    const summary = String(document.getElementById("newsSummary")?.value || "").trim();
+    const category = String(document.getElementById("newsCategory")?.value || "General").trim();
+    const status = String(document.getElementById("newsStatus")?.value || "published").trim();
+    const coverImageUrl = String(document.getElementById("newsCoverImage")?.value || "").trim();
+    const content = String(document.getElementById("newsContent")?.value || "").trim();
+
+    if (!title || !summary || !content) {
+        alert("Title, summary, and content are required.");
         return;
     }
 
-    const news = readStore("news", []);
+    try {
+        await createNewsItem({
+            title,
+            summary,
+            category: category || "General",
+            status,
+            coverImageUrl,
+            content,
+            tags: []
+        });
 
-    news.push({
-        id: makeClientId("news"),
-        title,
-        date,
-        content
-    });
+        alert("News published successfully");
+        const contentInput = document.getElementById("newsContent");
+        const summaryInput = document.getElementById("newsSummary");
+        const titleInput = document.getElementById("newsTitle");
+        const imageInput = document.getElementById("newsCoverImage");
 
-    writeStore("news", news);
-    alert("News Published Successfully");
-    window.location.href = "dashboard.html";
+        if (contentInput) contentInput.value = "";
+        if (summaryInput) summaryInput.value = "";
+        if (titleInput) titleInput.value = "";
+        if (imageInput) imageInput.value = "";
+
+        await loadAdminNewsTable();
+        await loadNews();
+    } catch (error) {
+        alert(error.message || "Unable to publish news");
+    }
 }
 
-function loadNews() {
-    const news = readStore("news", []);
+async function loadNews() {
+    const result = await fetchNewsList({ status: "all", pageSize: 200 });
+    const news = result.data || [];
     const totalNews = document.getElementById("totalNews");
     const table = document.getElementById("latestNews");
 
@@ -160,48 +342,318 @@ function loadNews() {
         totalNews.innerText = news.length;
     }
 
+    updateDashboardVisitorCount();
+
     if (!table) {
         return;
     }
 
     table.innerHTML = "";
 
-    news.forEach((item) => {
+    news.slice(0, 10).forEach((item) => {
         table.innerHTML += `
 <tr>
-<td>${item.title}</td>
-<td>${item.date}</td>
-<td>Published</td>
+<td>${escapeHtml(item.title)}</td>
+<td>${escapeHtml(formatNewsDate(item.publishedAt || item.createdAt))}</td>
+<td>${escapeHtml(item.status || "published")}</td>
 </tr>
 `;
     });
 }
 
-function publishVideo() {
-    const title = document.getElementById("videoTitle").value;
-    const link = document.getElementById("videoLink").value;
+function renderAdminNewsRows(items) {
+    if (!items.length) {
+        return `
+<tr>
+    <td colspan="5">No news items found.</td>
+</tr>
+`;
+    }
 
-    if (title === "" || link === "") {
-        alert("Please fill all video fields");
+    return items.map((item) => `
+<tr>
+    <td>${escapeHtml(item.title)}</td>
+    <td>${escapeHtml(item.category || "General")}</td>
+    <td>${escapeHtml(item.status || "published")}</td>
+    <td>${escapeHtml(formatNewsDate(item.publishedAt || item.createdAt))}</td>
+    <td><button type="button" data-news-delete-id="${escapeHtml(item.id)}">Delete</button></td>
+</tr>
+`).join("");
+}
+
+async function loadAdminNewsTable() {
+    const tableBody = document.getElementById("adminNewsTableBody");
+
+    if (!tableBody) {
         return;
     }
 
-    const videos = readStore("videos", []);
+    tableBody.innerHTML = "<tr><td colspan=\"5\">Loading...</td></tr>";
 
-    videos.push({
-        id: makeClientId("video"),
-        title,
-        link
-    });
-
-    writeStore("videos", videos);
-    alert("Video Published Successfully");
-    window.location.href = "videos.html";
+    const result = await fetchNewsList({ status: "all", pageSize: 100 });
+    tableBody.innerHTML = renderAdminNewsRows(result.data || []);
 }
 
-function loadVideos() {
-    const videos = readStore("videos", []);
+function normalizeLegacyVideoItem(item, index) {
+    const id = item.id || `video_${index + 1}`;
+    return {
+        id,
+        title: String(item.title || "Untitled video"),
+        description: String(item.description || "No description"),
+        category: String(item.category || "General"),
+        status: String(item.status || "published"),
+        sourceType: String(item.sourceType || "external"),
+        videoUrl: String(item.videoUrl || item.link || ""),
+        thumbnailUrl: String(item.thumbnailUrl || ""),
+        publishedAt: item.publishedAt || null,
+        createdAt: item.createdAt || null
+    };
+}
+
+async function fetchVideosList(options = {}) {
+    const {
+        status = "published",
+        page = 1,
+        pageSize = 20,
+        q = "",
+        category = ""
+    } = options;
+
+    try {
+        const params = new URLSearchParams({
+            status,
+            page: String(page),
+            pageSize: String(pageSize),
+            q: String(q || ""),
+            category: String(category || "")
+        });
+        const response = await fetch(`${API_BASE_URL}/api/videos?${params.toString()}`);
+
+        if (!response.ok) {
+            throw new Error("Video API request failed");
+        }
+
+        const payload = await response.json();
+        return {
+            data: Array.isArray(payload.data) ? payload.data : [],
+            source: "api"
+        };
+    } catch (error) {
+        const videos = readStore("videos", []).map(normalizeLegacyVideoItem);
+        const filtered = status === "all"
+            ? videos
+            : videos.filter((item) => item.status === status);
+
+        return {
+            data: filtered,
+            source: "fallback"
+        };
+    }
+}
+
+async function createVideoItem(payload) {
+    ensureAdminCredentialAvailable();
+
+    const response = await fetch(`${API_BASE_URL}/api/videos`, {
+        method: "POST",
+        headers: buildAdminRequestHeaders(true),
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to create video item");
+    }
+
+    return response.json();
+}
+
+async function deleteVideoItem(videoId) {
+    ensureAdminCredentialAvailable();
+
+    const response = await fetch(`${API_BASE_URL}/api/videos/${encodeURIComponent(videoId)}`, {
+        method: "DELETE",
+        headers: buildAdminRequestHeaders(false)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to delete video item");
+    }
+
+    return response.json();
+}
+
+async function uploadVideoFile(file) {
+    ensureAdminCredentialAvailable();
+
+    if (!file) {
+        throw new Error("Choose a video file first.");
+    }
+
+    const formData = new FormData();
+    formData.append("video", file);
+
+    const response = await fetch(`${API_BASE_URL}/api/uploads/video`, {
+        method: "POST",
+        headers: buildAdminRequestHeaders(false),
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Video upload failed");
+    }
+
+    const payload = await response.json();
+    return payload?.data || {};
+}
+
+async function fetchUsersList(options = {}) {
+    ensureAdminCredentialAvailable();
+    const params = new URLSearchParams({
+        q: String(options.q || ""),
+        role: String(options.role || ""),
+        status: String(options.status || ""),
+        page: String(options.page || 1),
+        pageSize: String(options.pageSize || 100)
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/users?${params.toString()}`, {
+        headers: buildAdminRequestHeaders(false)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to load users");
+    }
+
+    const payload = await response.json();
+    return payload.data || [];
+}
+
+async function createUserAccount(payload) {
+    ensureAdminCredentialAvailable();
+    const response = await fetch(`${API_BASE_URL}/api/auth/users`, {
+        method: "POST",
+        headers: buildAdminRequestHeaders(true),
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to create user");
+    }
+
+    return response.json();
+}
+
+async function updateUserAccount(userId, payload) {
+    ensureAdminCredentialAvailable();
+    const response = await fetch(`${API_BASE_URL}/api/auth/users/${encodeURIComponent(userId)}`, {
+        method: "PATCH",
+        headers: buildAdminRequestHeaders(true),
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to update user");
+    }
+
+    return response.json();
+}
+
+async function resetUserPassword(userId, password) {
+    ensureAdminCredentialAvailable();
+    const response = await fetch(`${API_BASE_URL}/api/auth/users/${encodeURIComponent(userId)}/password`, {
+        method: "PATCH",
+        headers: buildAdminRequestHeaders(true),
+        body: JSON.stringify({ password })
+    });
+
+    if (!response.ok) {
+        throw await parseApiError(response, "Failed to reset password");
+    }
+
+    return response.json();
+}
+
+function renderUsersRows(users) {
+    if (!users.length) {
+        return `
+<tr>
+    <td colspan="6">No users found.</td>
+</tr>
+`;
+    }
+
+    return users.map((user) => `
+<tr>
+    <td>${escapeHtml(user.name || "-")}</td>
+    <td>${escapeHtml(user.email || "-")}</td>
+    <td>${escapeHtml(user.role || "-")}</td>
+    <td>${user.isActive ? "Active" : "Inactive"}</td>
+    <td>${escapeHtml(user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "Never")}</td>
+    <td>
+        <div class="user-actions">
+            <button type="button" data-user-action="toggle-status" data-user-id="${escapeHtml(user.id)}" data-user-active="${user.isActive ? "1" : "0"}">${user.isActive ? "Deactivate" : "Activate"}</button>
+            <button type="button" data-user-action="promote-admin" data-user-id="${escapeHtml(user.id)}">Make Admin</button>
+            <button type="button" data-user-action="set-editor" data-user-id="${escapeHtml(user.id)}">Set Editor</button>
+            <button type="button" data-user-action="reset-password" data-user-id="${escapeHtml(user.id)}">Reset Password</button>
+        </div>
+    </td>
+</tr>
+`).join("");
+}
+
+async function publishVideo() {
+    const title = String(document.getElementById("videoTitle")?.value || "").trim();
+    const description = String(document.getElementById("videoDescription")?.value || "").trim();
+    const category = String(document.getElementById("videoCategory")?.value || "General").trim();
+    const status = String(document.getElementById("videoStatus")?.value || "published").trim();
+    const videoUrl = String(document.getElementById("videoLink")?.value || "").trim();
+    const thumbnailUrl = String(document.getElementById("videoThumbnailUrl")?.value || "").trim();
+    const sourceType = videoUrl.includes('/uploads/') ? "upload" : "external";
+
+    if (!title || !description || !videoUrl) {
+        alert("Title, description, and video URL are required.");
+        return;
+    }
+
+    try {
+        await createVideoItem({
+            title,
+            description,
+            category: category || "General",
+            status,
+            sourceType,
+            videoUrl,
+            thumbnailUrl
+        });
+
+        alert("Video published successfully");
+
+        const titleInput = document.getElementById("videoTitle");
+        const descriptionInput = document.getElementById("videoDescription");
+        const videoInput = document.getElementById("videoLink");
+        const thumbnailInput = document.getElementById("videoThumbnailUrl");
+
+        if (titleInput) titleInput.value = "";
+        if (descriptionInput) descriptionInput.value = "";
+        if (videoInput) videoInput.value = "";
+        if (thumbnailInput) thumbnailInput.value = "";
+
+        await loadVideos();
+        await renderHomeVideos();
+    } catch (error) {
+        alert(error.message || "Unable to publish video");
+    }
+}
+
+async function loadVideos() {
+    const result = await fetchVideosList({ status: "all", pageSize: 100 });
+    const videos = result.data || [];
+    const totalVideos = document.getElementById("totalVideos");
     const table = document.getElementById("videoTable");
+
+    if (totalVideos) {
+        totalVideos.innerText = String(videos.length);
+    }
 
     if (!table) {
         return;
@@ -212,9 +664,11 @@ function loadVideos() {
     videos.forEach((video) => {
         table.innerHTML += `
         <tr>
-            <td>${video.title}</td>
-            <td>${video.link}</td>
-            <td>Published</td>
+            <td>${escapeHtml(video.title)}</td>
+            <td>${escapeHtml(video.category || "General")}</td>
+            <td>${escapeHtml(video.status || "published")}</td>
+            <td>${escapeHtml(video.sourceType || "external")}</td>
+            <td><button type="button" data-video-delete-id="${escapeHtml(video.id)}">Delete</button></td>
         </tr>
         `;
     });
@@ -389,14 +843,15 @@ function renderEngagementWidget(itemType, itemId) {
 `;
 }
 
-function renderHomeNews() {
+async function renderHomeNews() {
     const container = document.getElementById("homeNews");
 
     if (!container) {
         return;
     }
 
-    const news = readStore("news", []);
+    const result = await fetchNewsList({ status: "published", pageSize: 12 });
+    const news = result.data || [];
 
     if (!news.length) {
         container.innerHTML = "<p>No news published yet.</p>";
@@ -406,21 +861,22 @@ function renderHomeNews() {
     container.innerHTML = news.map((item, index) => `
 <article class="news-card">
     <h3>${escapeHtml(item.title)}</h3>
-    <p><strong>Date:</strong> ${escapeHtml(item.date)}</p>
-    <p>${escapeHtml(item.content)}</p>
+    <p><strong>Date:</strong> ${escapeHtml(formatNewsDate(item.publishedAt || item.createdAt))}</p>
+    <p>${escapeHtml(item.summary || item.content || "")}</p>
     ${renderEngagementWidget("news", item.id || `news_${index + 1}`)}
 </article>
 `).join("");
 }
 
-function renderHomeVideos() {
+async function renderHomeVideos() {
     const container = document.getElementById("homeVideos");
 
     if (!container) {
         return;
     }
 
-    const videos = readStore("videos", []);
+    const result = await fetchVideosList({ status: "published", pageSize: 12 });
+    const videos = result.data || [];
 
     if (!videos.length) {
         container.innerHTML = "<p>No videos published yet.</p>";
@@ -430,7 +886,10 @@ function renderHomeVideos() {
     container.innerHTML = videos.map((video, index) => `
 <article class="video-card">
     <h3>${escapeHtml(video.title)}</h3>
-    <p><a href="${escapeHtml(video.link)}" target="_blank" rel="noopener noreferrer">Watch video</a></p>
+    <p>${escapeHtml(video.description || "")}</p>
+    ${video.videoUrl && video.videoUrl.includes('/uploads/')
+        ? `<video controls style="width:100%;max-height:240px;" src="${escapeHtml(video.videoUrl)}"></video>`
+        : `<p><a href="${escapeHtml(video.videoUrl)}" target="_blank" rel="noopener noreferrer">Watch video</a></p>`}
     ${renderEngagementWidget("video", video.id || `video_${index + 1}`)}
 </article>
 `).join("");
@@ -457,12 +916,110 @@ function setAdminApiKey(value) {
     localStorage.setItem("adminApiKey", value);
 }
 
-async function fetchModerationComments(status, queryText, page, pageSize) {
+function getAdminAuthToken() {
+    return localStorage.getItem("adminAuthToken") || "";
+}
+
+function setAdminAuthToken(value) {
+    localStorage.setItem("adminAuthToken", value);
+}
+
+function clearAdminAuthSession() {
+    localStorage.removeItem("adminAuthToken");
+    localStorage.removeItem("adminAuthUser");
+}
+
+function getAdminAuthUser() {
+    const raw = localStorage.getItem("adminAuthUser");
+
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw);
+    } catch (error) {
+        return null;
+    }
+}
+
+function setAdminAuthUser(user) {
+    localStorage.setItem("adminAuthUser", JSON.stringify(user || null));
+}
+
+function buildAdminRequestHeaders(includeJsonContentType) {
+    const headers = {};
+    const token = getAdminAuthToken();
     const adminKey = getAdminApiKey();
 
-    if (!adminKey) {
-        throw new Error("Admin API key is required");
+    if (includeJsonContentType) {
+        headers["Content-Type"] = "application/json";
     }
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    if (adminKey) {
+        headers["x-admin-key"] = adminKey;
+    }
+
+    return headers;
+}
+
+function ensureAdminCredentialAvailable() {
+    const token = getAdminAuthToken();
+    const adminKey = getAdminApiKey();
+
+    if (!token && !adminKey) {
+        throw new Error("Login required. Use Admin Login page or set legacy API key.");
+    }
+}
+
+function renderAdminAuthStatus() {
+    const statusNode = document.getElementById("adminAuthStatus");
+
+    if (!statusNode) {
+        return;
+    }
+
+    const user = getAdminAuthUser();
+    const token = getAdminAuthToken();
+    const key = getAdminApiKey();
+
+    if (token && user && user.email) {
+        statusNode.innerHTML = `Auth: <strong>${escapeHtml(user.email)}</strong> (${escapeHtml(user.role || "user")})`;
+        return;
+    }
+
+    if (key) {
+        statusNode.innerHTML = "Auth: <strong>Legacy API key mode</strong>";
+        return;
+    }
+
+    statusNode.innerHTML = "Auth: <strong>Not logged in</strong>";
+}
+
+async function loginAdmin(email, password) {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok || !payload?.success) {
+        throw new Error(payload.message || "Login failed");
+    }
+
+    return payload.data || {};
+}
+
+async function fetchModerationComments(status, queryText, page, pageSize) {
+    ensureAdminCredentialAvailable();
 
     const params = new URLSearchParams({
         status,
@@ -472,9 +1029,7 @@ async function fetchModerationComments(status, queryText, page, pageSize) {
     });
 
     const response = await fetch(`${API_BASE_URL}/api/engagement/moderation/comments?${params.toString()}`, {
-        headers: {
-            "x-admin-key": adminKey
-        }
+        headers: buildAdminRequestHeaders(false)
     });
 
     if (!response.ok) {
@@ -530,11 +1085,7 @@ function updateSelectionUiState(commentsInView) {
 }
 
 async function exportModerationCommentsCsv() {
-    const adminKey = getAdminApiKey();
-
-    if (!adminKey) {
-        throw new Error("Admin API key is required");
-    }
+    ensureAdminCredentialAvailable();
 
     const params = new URLSearchParams({
         status: moderationState.status,
@@ -542,9 +1093,7 @@ async function exportModerationCommentsCsv() {
     });
 
     const response = await fetch(`${API_BASE_URL}/api/engagement/moderation/comments/export.csv?${params.toString()}`, {
-        headers: {
-            "x-admin-key": adminKey
-        }
+        headers: buildAdminRequestHeaders(false)
     });
 
     if (!response.ok) {
@@ -565,18 +1114,11 @@ async function exportModerationCommentsCsv() {
 }
 
 async function bulkModerateComments(action, items) {
-    const adminKey = getAdminApiKey();
-
-    if (!adminKey) {
-        throw new Error("Admin API key is required");
-    }
+    ensureAdminCredentialAvailable();
 
     const response = await fetch(`${API_BASE_URL}/api/engagement/moderation/comments/bulk`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            "x-admin-key": adminKey
-        },
+        headers: buildAdminRequestHeaders(true),
         body: JSON.stringify({ action, items })
     });
 
@@ -589,18 +1131,11 @@ async function bulkModerateComments(action, items) {
 }
 
 async function moderateComment(itemType, itemId, commentId, action) {
-    const adminKey = getAdminApiKey();
-
-    if (!adminKey) {
-        throw new Error("Admin API key is required");
-    }
+    ensureAdminCredentialAvailable();
 
     const response = await fetch(`${API_BASE_URL}/api/engagement/${itemType}/${itemId}/comments/${commentId}`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            "x-admin-key": adminKey
-        },
+        headers: buildAdminRequestHeaders(true),
         body: JSON.stringify({ action })
     });
 
@@ -765,6 +1300,7 @@ function bindModerationActions() {
 function initializeModerationPage() {
     const apiKeyInput = document.getElementById("adminApiKey");
     const saveApiKeyButton = document.getElementById("saveAdminApiKey");
+    const logoutButton = document.getElementById("logoutAdminSession");
     const refreshButton = document.getElementById("refreshComments");
     const statusFilter = document.getElementById("commentStatusFilter");
     const searchInput = document.getElementById("commentSearch");
@@ -782,12 +1318,22 @@ function initializeModerationPage() {
     }
 
     apiKeyInput.value = getAdminApiKey();
+    renderAdminAuthStatus();
 
     saveApiKeyButton.addEventListener("click", () => {
         setAdminApiKey(apiKeyInput.value.trim());
+        renderAdminAuthStatus();
         moderationState.page = 1;
         loadModerationComments();
     });
+
+    if (logoutButton) {
+        logoutButton.addEventListener("click", () => {
+            clearAdminAuthSession();
+            renderAdminAuthStatus();
+            alert("JWT admin session cleared.");
+        });
+    }
 
     refreshButton.addEventListener("click", loadModerationComments);
     statusFilter.addEventListener("change", () => {
@@ -905,6 +1451,363 @@ function initializeModerationPage() {
     loadModerationComments();
 }
 
+function initializeAdminLoginPage() {
+    const form = document.getElementById("adminLoginForm");
+    const emailInput = document.getElementById("adminLoginEmail");
+    const passwordInput = document.getElementById("adminLoginPassword");
+    const submitButton = document.getElementById("adminLoginSubmit");
+    const statusNode = document.getElementById("adminLoginStatus");
+
+    if (!form || !emailInput || !passwordInput || !submitButton || !statusNode) {
+        return;
+    }
+
+    const existingUser = getAdminAuthUser();
+    if (existingUser && existingUser.email) {
+        statusNode.textContent = `Already logged in as ${existingUser.email}`;
+        statusNode.className = "status success";
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const email = String(emailInput.value || "").trim().toLowerCase();
+        const password = String(passwordInput.value || "");
+
+        if (!email || !password) {
+            statusNode.textContent = "Email and password are required.";
+            statusNode.className = "status error";
+            return;
+        }
+
+        submitButton.disabled = true;
+        statusNode.textContent = "Signing in...";
+        statusNode.className = "status";
+
+        try {
+            const data = await loginAdmin(email, password);
+            setAdminAuthToken(String(data.token || ""));
+            setAdminAuthUser(data.user || null);
+            statusNode.textContent = "Login successful. You can now open moderation.";
+            statusNode.className = "status success";
+            passwordInput.value = "";
+        } catch (error) {
+            statusNode.textContent = error.message || "Login failed.";
+            statusNode.className = "status error";
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+}
+
+function initializeNewsManagementPage() {
+    const refreshButton = document.getElementById("refreshNewsList");
+    const newsTableBody = document.getElementById("adminNewsTableBody");
+    const uploadButton = document.getElementById("uploadNewsImage");
+    const fileInput = document.getElementById("newsImageFile");
+    const imageUrlInput = document.getElementById("newsCoverImage");
+    const uploadStatus = document.getElementById("newsImageUploadStatus");
+
+    if (!newsTableBody) {
+        return;
+    }
+
+    if (refreshButton) {
+        refreshButton.addEventListener("click", () => {
+            loadAdminNewsTable();
+        });
+    }
+
+    if (uploadButton && fileInput && imageUrlInput && uploadStatus) {
+        uploadButton.addEventListener("click", async () => {
+            const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+            if (!file) {
+                uploadStatus.textContent = "Choose an image before uploading.";
+                return;
+            }
+
+            uploadButton.disabled = true;
+            uploadStatus.textContent = "Uploading image...";
+
+            try {
+                const uploaded = await uploadNewsImageFile(file);
+                imageUrlInput.value = String(uploaded.url || "");
+                uploadStatus.textContent = "Upload successful. Cover image URL has been filled.";
+            } catch (error) {
+                uploadStatus.textContent = error.message || "Image upload failed.";
+            } finally {
+                uploadButton.disabled = false;
+            }
+        });
+    }
+
+    newsTableBody.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-news-delete-id]");
+
+        if (!button) {
+            return;
+        }
+
+        const newsId = button.getAttribute("data-news-delete-id");
+
+        if (!newsId) {
+            return;
+        }
+
+        const confirmed = window.confirm("Delete this news item?");
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await deleteNewsItem(newsId);
+            await loadAdminNewsTable();
+            await loadNews();
+            alert("News item deleted.");
+        } catch (error) {
+            alert(error.message || "Delete failed");
+        }
+    });
+
+    loadAdminNewsTable();
+}
+
+function initializeVideosManagementPage() {
+    const refreshButton = document.getElementById("refreshVideosList");
+    const tableBody = document.getElementById("videoTable");
+    const uploadVideoButton = document.getElementById("uploadVideoFile");
+    const videoFileInput = document.getElementById("videoFile");
+    const videoUrlInput = document.getElementById("videoLink");
+    const videoUploadStatus = document.getElementById("videoUploadStatus");
+    const uploadThumbnailButton = document.getElementById("uploadVideoThumbnail");
+    const thumbnailFileInput = document.getElementById("videoThumbnailFile");
+    const thumbnailUrlInput = document.getElementById("videoThumbnailUrl");
+    const thumbnailUploadStatus = document.getElementById("videoThumbnailUploadStatus");
+
+    if (!tableBody) {
+        return;
+    }
+
+    if (refreshButton) {
+        refreshButton.addEventListener("click", () => {
+            loadVideos();
+        });
+    }
+
+    if (uploadVideoButton && videoFileInput && videoUrlInput && videoUploadStatus) {
+        uploadVideoButton.addEventListener("click", async () => {
+            const file = videoFileInput.files && videoFileInput.files[0] ? videoFileInput.files[0] : null;
+
+            if (!file) {
+                videoUploadStatus.textContent = "Choose a video file first.";
+                return;
+            }
+
+            uploadVideoButton.disabled = true;
+            videoUploadStatus.textContent = "Uploading video...";
+
+            try {
+                const uploaded = await uploadVideoFile(file);
+                videoUrlInput.value = String(uploaded.url || "");
+                videoUploadStatus.textContent = "Video uploaded successfully.";
+            } catch (error) {
+                videoUploadStatus.textContent = error.message || "Video upload failed.";
+            } finally {
+                uploadVideoButton.disabled = false;
+            }
+        });
+    }
+
+    if (uploadThumbnailButton && thumbnailFileInput && thumbnailUrlInput && thumbnailUploadStatus) {
+        uploadThumbnailButton.addEventListener("click", async () => {
+            const file = thumbnailFileInput.files && thumbnailFileInput.files[0] ? thumbnailFileInput.files[0] : null;
+
+            if (!file) {
+                thumbnailUploadStatus.textContent = "Choose a thumbnail image first.";
+                return;
+            }
+
+            uploadThumbnailButton.disabled = true;
+            thumbnailUploadStatus.textContent = "Uploading thumbnail...";
+
+            try {
+                const uploaded = await uploadNewsImageFile(file);
+                thumbnailUrlInput.value = String(uploaded.url || "");
+                thumbnailUploadStatus.textContent = "Thumbnail uploaded successfully.";
+            } catch (error) {
+                thumbnailUploadStatus.textContent = error.message || "Thumbnail upload failed.";
+            } finally {
+                uploadThumbnailButton.disabled = false;
+            }
+        });
+    }
+
+    tableBody.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-video-delete-id]");
+
+        if (!button) {
+            return;
+        }
+
+        const videoId = button.getAttribute("data-video-delete-id");
+        if (!videoId) {
+            return;
+        }
+
+        const confirmed = window.confirm("Delete this video item?");
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await deleteVideoItem(videoId);
+            await loadVideos();
+            await renderHomeVideos();
+            alert("Video item deleted.");
+        } catch (error) {
+            alert(error.message || "Delete failed");
+        }
+    });
+
+    loadVideos();
+}
+
+function initializeUsersManagementPage() {
+    const tableBody = document.getElementById("usersTableBody");
+    const refreshButton = document.getElementById("refreshUsersBtn");
+    const searchInput = document.getElementById("usersSearch");
+    const roleFilter = document.getElementById("usersRoleFilter");
+    const statusFilter = document.getElementById("usersStatusFilter");
+    const createButton = document.getElementById("createUserBtn");
+    const newUserName = document.getElementById("newUserName");
+    const newUserEmail = document.getElementById("newUserEmail");
+    const newUserRole = document.getElementById("newUserRole");
+    const newUserPassword = document.getElementById("newUserPassword");
+
+    if (!tableBody) {
+        return;
+    }
+
+    const loadUsersTable = async () => {
+        tableBody.innerHTML = "<tr><td colspan=\"6\">Loading users...</td></tr>";
+
+        try {
+            const users = await fetchUsersList({
+                q: searchInput ? searchInput.value.trim() : "",
+                role: roleFilter ? roleFilter.value : "",
+                status: statusFilter ? statusFilter.value : "",
+                pageSize: 100
+            });
+            tableBody.innerHTML = renderUsersRows(users);
+        } catch (error) {
+            tableBody.innerHTML = `<tr><td colspan=\"6\">${escapeHtml(error.message || "Failed to load users")}</td></tr>`;
+        }
+    };
+
+    if (refreshButton) {
+        refreshButton.addEventListener("click", () => {
+            loadUsersTable();
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                loadUsersTable();
+            }
+        });
+    }
+
+    if (roleFilter) {
+        roleFilter.addEventListener("change", () => {
+            loadUsersTable();
+        });
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener("change", () => {
+            loadUsersTable();
+        });
+    }
+
+    if (createButton && newUserName && newUserEmail && newUserRole && newUserPassword) {
+        createButton.addEventListener("click", async () => {
+            const payload = {
+                name: String(newUserName.value || "").trim(),
+                email: String(newUserEmail.value || "").trim().toLowerCase(),
+                role: String(newUserRole.value || "editor").trim(),
+                password: String(newUserPassword.value || "")
+            };
+
+            if (!payload.name || !payload.email || !payload.password) {
+                alert("Name, email, and password are required.");
+                return;
+            }
+
+            try {
+                await createUserAccount(payload);
+                alert("User created successfully.");
+                newUserName.value = "";
+                newUserEmail.value = "";
+                newUserPassword.value = "";
+                await loadUsersTable();
+            } catch (error) {
+                alert(error.message || "Failed to create user");
+            }
+        });
+    }
+
+    tableBody.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-user-action]");
+
+        if (!button) {
+            return;
+        }
+
+        const action = button.getAttribute("data-user-action");
+        const userId = button.getAttribute("data-user-id");
+
+        if (!action || !userId) {
+            return;
+        }
+
+        try {
+            if (action === "toggle-status") {
+                const active = button.getAttribute("data-user-active") === "1";
+                await updateUserAccount(userId, { isActive: !active });
+                await loadUsersTable();
+                return;
+            }
+
+            if (action === "promote-admin") {
+                await updateUserAccount(userId, { role: "admin" });
+                await loadUsersTable();
+                return;
+            }
+
+            if (action === "set-editor") {
+                await updateUserAccount(userId, { role: "editor" });
+                await loadUsersTable();
+                return;
+            }
+
+            if (action === "reset-password") {
+                const newPassword = window.prompt("Enter new password (min 8 chars):", "");
+                if (!newPassword) {
+                    return;
+                }
+                await resetUserPassword(userId, newPassword);
+                alert("Password reset successful.");
+            }
+        } catch (error) {
+            alert(error.message || "User action failed");
+        }
+    });
+
+    loadUsersTable();
+}
+
 async function refreshEngagementWidgets() {
     const widgets = document.querySelectorAll(".engagement-widget");
 
@@ -994,8 +1897,8 @@ function bindEngagementForms() {
 
 async function initializeHomePage() {
     ensureContentIds();
-    renderHomeNews();
-    renderHomeVideos();
+    await renderHomeNews();
+    await renderHomeVideos();
     await refreshEngagementWidgets();
 }
 
@@ -1003,7 +1906,13 @@ window.addEventListener("load", loadNews);
 window.addEventListener("load", loadVideos);
 window.addEventListener("load", loadLiveTV);
 window.addEventListener("load", loadHomeLiveTV);
+window.addEventListener("load", incrementVisitorCounterIfPublicPage);
+window.addEventListener("load", updateDashboardVisitorCount);
 window.addEventListener("load", initializeHomePage);
 window.addEventListener("load", initializeModerationPage);
+window.addEventListener("load", initializeAdminLoginPage);
+window.addEventListener("load", initializeNewsManagementPage);
+window.addEventListener("load", initializeVideosManagementPage);
+window.addEventListener("load", initializeUsersManagementPage);
 
 bindEngagementForms();

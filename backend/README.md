@@ -11,6 +11,10 @@ Backend API server for M62 WEB TV contact form and email handling.
 ✅ Form validation and sanitization
 ✅ CORS support for frontend integration
 ✅ Error handling and logging
+✅ MongoDB Atlas integration for News CRUD
+✅ JWT login/authentication with role-based access
+✅ News image upload endpoint
+✅ Video upload and Video CRUD endpoints
 
 ## Installation
 
@@ -38,6 +42,15 @@ EMAIL_PASSWORD=your-app-password
 ADMIN_EMAIL=info@m62webtv.ne
 ADMIN_API_KEY=change-this-to-a-strong-key
 COMMENT_ARCHIVE_DAYS=180
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB_NAME=m62_webtv
+MONGODB_INMEMORY_FALLBACK=true
+JWT_SECRET=change-this-to-a-very-long-random-secret
+JWT_EXPIRES_IN=7d
+ADMIN_BOOTSTRAP_EMAIL=admin@example.com
+ADMIN_BOOTSTRAP_PASSWORD=change-this-admin-password
+UPLOAD_MAX_MB=10
+VIDEO_UPLOAD_MAX_MB=200
 PORT=3000
 ```
 
@@ -51,6 +64,11 @@ PORT=3000
 ### Development (with auto-reload)
 ```bash
 npm run dev
+```
+
+If MongoDB is not installed locally, start a development Mongo daemon in a separate terminal:
+```bash
+npm run mongo:dev
 ```
 
 ### Production
@@ -101,6 +119,135 @@ Send a test email (for debugging)
 ### GET /api/engagement/:itemType/:itemId
 Get comments and ratings summary for an item.
 
+### GET /api/news
+List news items from MongoDB.
+
+Query params:
+- `status`: `published` (default) | `draft` | `all`
+- `q`: text search
+- `category`: exact category filter
+- `page`: page number
+- `pageSize`: items per page (max 100)
+
+### GET /api/news/:idOrSlug
+Fetch one news item by MongoDB id or slug.
+
+### POST /api/auth/login
+Authenticate user and return JWT token.
+
+Request body:
+```json
+{
+  "email": "admin@example.com",
+  "password": "strong-password"
+}
+```
+
+### GET /api/auth/me
+Get current authenticated user.
+
+Header required:
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+### POST /api/auth/users
+Admin-only create user account.
+
+### GET /api/auth/users
+Admin-only list users with optional filters.
+
+Query params:
+- `q`: search by name/email
+- `role`: `admin` | `editor` | `viewer`
+- `status`: `active` | `inactive`
+- `page`, `pageSize`
+
+### PATCH /api/auth/users/:id
+Admin-only update user profile fields (`name`, `role`, `isActive`).
+
+### PATCH /api/auth/users/:id/password
+Admin-only reset user password.
+
+### POST /api/uploads/image
+Admin-only image upload endpoint for News cover images.
+
+Auth required (either one):
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+or
+```
+x-admin-key: <ADMIN_API_KEY>
+```
+
+Request:
+- `multipart/form-data`
+- field name: `image`
+
+### POST /api/uploads/video
+Admin-only video upload endpoint.
+
+Auth required (either one):
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+or
+```
+x-admin-key: <ADMIN_API_KEY>
+```
+
+Request:
+- `multipart/form-data`
+- field name: `video`
+
+### GET /api/videos
+Public list endpoint for videos.
+
+Query params:
+- `status`: `published` (default) | `draft` | `all`
+- `q`: text search
+- `category`: exact category filter
+- `page`: page number
+- `pageSize`: items per page (max 100)
+
+### POST /api/videos
+Admin-only create video item.
+
+### DELETE /api/videos/:id
+Admin-only soft delete video item.
+
+### POST /api/news
+Admin-only create news item.
+
+Header required:
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Backward-compatibility: legacy `x-admin-key` still works for News CRUD while migrating.
+
+Request body example:
+```json
+{
+  "title": "Sabon labari",
+  "summary": "Takaitaccen bayani",
+  "content": "Cikakken labari...",
+  "category": "Politics",
+  "coverImageUrl": "https://example.com/image.jpg",
+  "videoUrl": "https://example.com/video.mp4",
+  "tags": ["niger", "news"],
+  "status": "published",
+  "featured": true
+}
+```
+
+### PATCH /api/news/:id
+Admin-only update a news item.
+
+### DELETE /api/news/:id
+Admin-only soft delete (sets `deletedAt`).
+
 ### POST /api/engagement/:itemType/:itemId/comments
 Add a new comment.
 
@@ -116,7 +263,11 @@ Query params:
 - `page`: page number (default `1`)
 - `pageSize`: results per page (default `25`, max `100`)
 
-Header required:
+Auth required (either one):
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+or
 ```
 x-admin-key: <ADMIN_API_KEY>
 ```
@@ -153,6 +304,8 @@ Request body:
 ### GET /api/engagement/moderation/comments/export.csv
 Admin-only CSV export of filtered moderation comments.
 
+Moderation endpoints also support JWT bearer auth with the same fallback to `x-admin-key`.
+
 Query params:
 - `status`: `all` | `visible` | `hidden` | `archived`
 - `q`: text search
@@ -181,8 +334,23 @@ Run `npm install` again
 ### CORS errors
 Make sure the frontend URL is in the `origin` array in server.js
 
+### MongoDB not connected
+- Confirm `MONGODB_URI` is present and valid
+- If using Atlas, whitelist your server IP in Atlas Network Access
+- Check Atlas username/password and database permissions
+
+### Login fails with JWT error
+- Ensure `JWT_SECRET` is set in `.env`
+- Restart server after editing env variables
+- Use `POST /api/auth/login` to get a fresh token after password updates
+
 ### Port already in use
 Change `PORT` in `.env` file or kill the process using port 3000
+
+### Uploaded files location
+- Uploaded image files are stored in `backend/uploads/`
+- Files are served at `/uploads/<filename>`
+- Uploaded videos are stored in the same `backend/uploads/` folder
 
 ## Deployment
 
