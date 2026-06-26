@@ -28,6 +28,7 @@ const VIDEO_UPLOAD_MAX_MB = Math.max(Number(process.env.VIDEO_UPLOAD_MAX_MB || 2
 const DATA_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const ENGAGEMENT_FILE = path.join(DATA_DIR, 'engagement.json');
+const STATS_FILE = path.join(DATA_DIR, 'app-stats.json');
 const BLOCKED_TERMS = ['spam', 'scam', 'fraud', 'casino', 'betting', 'porn'];
 const rateLimitStore = new Map();
 let mongoReady = false;
@@ -131,6 +132,12 @@ function requireMongo(req, res, next) {
 function ensureUploadsDirectory() {
     if (!fs.existsSync(UPLOADS_DIR)) {
         fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+}
+
+function ensureDataDirectory() {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
     }
 }
 
@@ -540,9 +547,7 @@ function requireAdminKey(req, res, next) {
 }
 
 function ensureEngagementStore() {
-    if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
+    ensureDataDirectory();
 
     if (!fs.existsSync(ENGAGEMENT_FILE)) {
         fs.writeFileSync(
@@ -565,6 +570,49 @@ function readEngagementStore() {
 
 function writeEngagementStore(store) {
     fs.writeFileSync(ENGAGEMENT_FILE, JSON.stringify(store, null, 2), 'utf8');
+}
+
+function ensureStatsStore() {
+    ensureDataDirectory();
+
+    if (!fs.existsSync(STATS_FILE)) {
+        fs.writeFileSync(
+            STATS_FILE,
+            JSON.stringify({ visitorsCount: 0, updatedAt: new Date().toISOString() }, null, 2),
+            'utf8'
+        );
+    }
+}
+
+function readStatsStore() {
+    ensureStatsStore();
+
+    try {
+        const parsed = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+        return {
+            visitorsCount: Math.max(Number(parsed.visitorsCount || 0), 0),
+            updatedAt: parsed.updatedAt || null
+        };
+    } catch (error) {
+        return {
+            visitorsCount: 0,
+            updatedAt: null
+        };
+    }
+}
+
+function writeStatsStore(store) {
+    fs.writeFileSync(STATS_FILE, JSON.stringify(store, null, 2), 'utf8');
+}
+
+function countModerationComments(store) {
+    return ['news', 'video'].reduce((total, itemType) => {
+        const bucket = store[itemType] || {};
+        return total + Object.values(bucket).reduce((innerTotal, item) => {
+            const comments = Array.isArray(item.comments) ? item.comments : [];
+            return innerTotal + comments.length;
+        }, 0);
+    }, 0);
 }
 
 function getItemBucket(store, itemType, itemId) {
@@ -916,6 +964,50 @@ app.post('/api/contact', createRateLimiter(5 * 60 * 1000, 5), validateContactFor
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ status: 'Server OK ✅', timestamp: new Date() });
+});
+
+app.get('/api/stats/dashboard', async (req, res, next) => {
+    try {
+        const statsStore = readStatsStore();
+        const engagementStore = readEngagementStore();
+        let newsCount = 0;
+        let videosCount = 0;
+        let usersCount = 0;
+
+        if (mongoReady && NewsModel && VideoModel && UserModel) {
+            newsCount = await NewsModel.countDocuments({ deletedAt: null });
+            videosCount = await VideoModel.countDocuments({ deletedAt: null });
+            usersCount = await UserModel.countDocuments({ isActive: true });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                newsCount,
+                videosCount,
+                usersCount,
+                commentsCount: countModerationComments(engagementStore),
+                visitorsCount: statsStore.visitorsCount,
+                mongoReady
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/stats/visit', createRateLimiter(60 * 1000, 30), (req, res) => {
+    const statsStore = readStatsStore();
+    statsStore.visitorsCount += 1;
+    statsStore.updatedAt = new Date().toISOString();
+    writeStatsStore(statsStore);
+
+    res.status(201).json({
+        success: true,
+        data: {
+            visitorsCount: statsStore.visitorsCount
+        }
+    });
 });
 
 // Test email endpoint

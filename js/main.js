@@ -58,19 +58,41 @@ function writeStore(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
 }
 
-function getVisitorCount() {
+function getLocalVisitorCount() {
     return Number(localStorage.getItem("m62VisitorCount") || "0");
 }
 
-function updateDashboardVisitorCount() {
-    const totalVisitors = document.getElementById("totalVisitors");
+function setLocalVisitorCount(value) {
+    localStorage.setItem("m62VisitorCount", String(Math.max(Number(value || 0), 0)));
+}
 
-    if (totalVisitors) {
-        totalVisitors.innerText = String(getVisitorCount());
+async function fetchDashboardStats() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/stats/dashboard`);
+
+        if (!response.ok) {
+            throw new Error("Dashboard stats request failed");
+        }
+
+        const payload = await response.json();
+        return payload.data || {};
+    } catch (error) {
+        return {
+            visitorsCount: getLocalVisitorCount()
+        };
     }
 }
 
-function incrementVisitorCounterIfPublicPage() {
+async function updateDashboardVisitorCount() {
+    const totalVisitors = document.getElementById("totalVisitors");
+
+    if (totalVisitors) {
+        const stats = await fetchDashboardStats();
+        totalVisitors.innerText = String(stats.visitorsCount || 0);
+    }
+}
+
+async function incrementVisitorCounterIfPublicPage() {
     if (typeof window === "undefined") {
         return;
     }
@@ -87,7 +109,21 @@ function incrementVisitorCounterIfPublicPage() {
         return;
     }
 
-    localStorage.setItem("m62VisitorCount", String(getVisitorCount() + 1));
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/stats/visit`, {
+            method: "POST"
+        });
+
+        if (!response.ok) {
+            throw new Error("Visitor tracking failed");
+        }
+
+        const payload = await response.json();
+        setLocalVisitorCount(payload?.data?.visitorsCount || 0);
+    } catch (error) {
+        setLocalVisitorCount(getLocalVisitorCount() + 1);
+    }
+
     sessionStorage.setItem(sessionKey, "1");
 }
 
@@ -1018,6 +1054,33 @@ async function loginAdmin(email, password) {
     return payload.data || {};
 }
 
+async function synchronizeAdminSession() {
+    const token = getAdminAuthToken();
+
+    if (!token) {
+        clearAdminAuthSession();
+        return null;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+            headers: buildAdminRequestHeaders(false)
+        });
+
+        if (!response.ok) {
+            clearAdminAuthSession();
+            return null;
+        }
+
+        const payload = await response.json();
+        const user = payload.data || null;
+        setAdminAuthUser(user);
+        return user;
+    } catch (error) {
+        return getAdminAuthUser();
+    }
+}
+
 async function fetchModerationComments(status, queryText, page, pageSize) {
     ensureAdminCredentialAvailable();
 
@@ -1318,7 +1381,9 @@ function initializeModerationPage() {
     }
 
     apiKeyInput.value = getAdminApiKey();
-    renderAdminAuthStatus();
+    synchronizeAdminSession().finally(() => {
+        renderAdminAuthStatus();
+    });
 
     saveApiKeyButton.addEventListener("click", () => {
         setAdminApiKey(apiKeyInput.value.trim());
@@ -1462,11 +1527,12 @@ function initializeAdminLoginPage() {
         return;
     }
 
-    const existingUser = getAdminAuthUser();
-    if (existingUser && existingUser.email) {
-        statusNode.textContent = `Already logged in as ${existingUser.email}`;
-        statusNode.className = "status success";
-    }
+    synchronizeAdminSession().then((existingUser) => {
+        if (existingUser && existingUser.email) {
+            statusNode.textContent = `Already logged in as ${existingUser.email}`;
+            statusNode.className = "status success";
+        }
+    });
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
