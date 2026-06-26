@@ -23,6 +23,309 @@ function resolveApiBaseUrl() {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
+const DEFAULT_LANGUAGE = "ha";
+const SUPPORTED_LANGUAGES = ["ha", "en", "fr", "ar"];
+let currentLanguage = DEFAULT_LANGUAGE;
+
+const I18N = {
+    ha: {
+        headerTagline: "La Voix Du Peuple | Muryar Jama'a 🇳🇪",
+        languageLabel: "Yare",
+        searchPlaceholder: "🔍 Nema labari ko bidiyo...",
+        searchButton: "Nema",
+        navHome: "Home",
+        navLive: "Live TV",
+        navNews: "Labarai",
+        navFeatured: "Fittatattu",
+        navPrograms: "Shirye-shirye",
+        navVideos: "Jerin Talabiji",
+        navGallery: "Hotuna",
+        navContact: "Tuntube Mu",
+        heroSubtitle: "Muryar Niger zuwa duniya",
+        heroTopics: "Labarai masu zafi • Siyasa • Tattalin arziki • Wasanni • Nishaɗi • Live TV",
+        watchLiveButton: "🔴 KALLI KAI TSAYE",
+        carouselHeading: "⭐ Fitattun Labarai",
+        liveHeading: "🔴 LIVE TV",
+        newsHeading: "📰 Sabbin Labarai",
+        featuredHeading: "⭐ Fittatun Labarai",
+        featuredIntro: "Manyan labaran da suka fi daukar hankali daga M62 WEB TV.",
+        programsHeading: "📺 Jadawalin Shirye-shirye",
+        programsIntro: "Lokutan manyan shirye-shiryen M62 WEB TV na yau da kullum.",
+        program1Title: "🎤 Labaran Safe",
+        program1Desc: "Takaitattun labarai da bayanan rana.",
+        program2Title: "📰 Nazarin Labarai",
+        program2Desc: "Tattaunawa kan manyan abubuwan da ke faruwa.",
+        program3Title: "⚽ Wasanni",
+        program3Desc: "Sakamako da nazarin wasanni na gida da waje.",
+        program4Title: "🌙 Shirin Yamma",
+        program4Desc: "Babban shirin dare da bakuncin masana.",
+        videosHeading: "🎬 Jerin Talabiji",
+        galleryHeading: "🖼️ Hotunan Labarai",
+        galleryIntro: "Zababbun hotuna daga labarai da bidiyo.",
+        contactHeading: "📞 Tuntube Mu",
+        contactHours: "🕒 Litinin - Asabar: 08:00 - 20:00",
+        contactNamePlaceholder: "Sunanka",
+        contactEmailPlaceholder: "Imel",
+        contactSubjectPlaceholder: "Taken sako",
+        contactMessagePlaceholder: "Rubuta sakonka...",
+        contactSubmit: "Aika Sako",
+        newsletterHeading: "📩 Yi rijista domin samun sabbin labarai",
+        newsletterPlaceholder: "Shigar da imel dinka",
+        newsletterButton: "Yi Rijista",
+        footerText: "© 2026 M62 WEB TV NIGER | Powered by PDG MULTIMEDIA TV LTD",
+        loadingEngagement: "Ana loda comments da rating...",
+        engagementName: "Sunanka (optional)",
+        engagementMessage: "Rubuta comment",
+        engagementRate: "Yi rating",
+        noRating: "Babu rating",
+        send: "Tura",
+        noNewsYet: "Babu labari da aka wallafa yanzu.",
+        noFeaturedNews: "Babu fittatun labarai yanzu.",
+        topStory: "LABARI NA FARKO",
+        featured: "FITATTE",
+        noFeaturedInCarousel: "Babu fitattun labarai yanzu. Da fatan a kara labarai daga admin.",
+        featuredNewsFallback: "Fitaccen Labari",
+        noVideosYet: "Babu bidiyo da aka wallafa yanzu.",
+        watchVideo: "Kalli bidiyo",
+        newsImage: "Hoton Labari",
+        videoThumbnail: "Hoton bidiyo",
+        noGalleryYet: "Babu hotuna yanzu. Da fatan a kara hotuna a news/videos admin.",
+        noCommentsYet: "Babu comments yanzu.",
+        anonymous: "Ba a saka suna ba",
+        avgRating: "Matsakaicin rating",
+        ratings: "ratings",
+        comments: "comments",
+        feedbackFillAll: "Da fatan a cika dukkan filaye.",
+        feedbackSendError: "Akwai matsala wajen tura sako.",
+        feedbackSent: "An aika sakonka cikin nasara.",
+        feedbackSendFailed: "An kasa aika sako yanzu.",
+        newsletterInvalid: "Shigar da ingantaccen imel.",
+        newsletterSuccess: "Nagode. An yi rijista cikin nasara."
+    },
+    en: {
+        headerTagline: "The Voice of the People 🇳🇪",
+        languageLabel: "Language",
+        searchPlaceholder: "🔍 Search news or videos...",
+        searchButton: "Search",
+        navHome: "Home",
+        navLive: "Live TV",
+        navNews: "News",
+        navFeatured: "Featured",
+        navPrograms: "Programs",
+        navVideos: "TV List",
+        navGallery: "Gallery",
+        navContact: "Contact",
+        heroSubtitle: "The Voice of Niger to the World",
+        heroTopics: "Breaking News • Politics • Economy • Sports • Entertainment • Live TV",
+        watchLiveButton: "🔴 WATCH LIVE",
+        carouselHeading: "⭐ Featured Stories",
+        liveHeading: "🔴 LIVE TV",
+        newsHeading: "📰 Latest News",
+        featuredHeading: "⭐ Featured News",
+        featuredIntro: "Top highlights from M62 WEB TV.",
+        programsHeading: "📺 Program Schedule",
+        programsIntro: "Daily flagship programs on M62 WEB TV.",
+        program1Title: "🎤 Morning News",
+        program1Desc: "Daily headline roundup.",
+        program2Title: "📰 News Analysis",
+        program2Desc: "Deep analysis of key events.",
+        program3Title: "⚽ Sports",
+        program3Desc: "Local and international sports highlights.",
+        program4Title: "🌙 Evening Show",
+        program4Desc: "Prime-time program with guest experts.",
+        videosHeading: "🎬 TV Playlist",
+        galleryHeading: "🖼️ News Images",
+        galleryIntro: "Selected images from news and videos.",
+        contactHeading: "📞 Contact Us",
+        contactHours: "🕒 Monday - Saturday: 08:00 - 20:00",
+        contactNamePlaceholder: "Your name",
+        contactEmailPlaceholder: "Email",
+        contactSubjectPlaceholder: "Subject",
+        contactMessagePlaceholder: "Write your message...",
+        contactSubmit: "Send Message",
+        newsletterHeading: "📩 Subscribe for latest updates",
+        newsletterPlaceholder: "Enter your email",
+        newsletterButton: "Subscribe",
+        footerText: "© 2026 M62 WEB TV NIGER | Powered by PDG MULTIMEDIA TV LTD",
+        loadingEngagement: "Loading ratings and comments...",
+        engagementName: "Your name (optional)",
+        engagementMessage: "Write a comment",
+        engagementRate: "Rate this item",
+        noRating: "No rating",
+        send: "Send",
+        noNewsYet: "No news published yet.",
+        noFeaturedNews: "No featured news available yet.",
+        topStory: "TOP STORY",
+        featured: "FEATURED",
+        noFeaturedInCarousel: "No featured stories yet. Please publish news from admin.",
+        featuredNewsFallback: "Featured Story",
+        noVideosYet: "No videos published yet.",
+        watchVideo: "Watch video",
+        newsImage: "News image",
+        videoThumbnail: "Video thumbnail",
+        noGalleryYet: "No gallery images available yet. Add cover images or thumbnails in admin.",
+        noCommentsYet: "No comments yet.",
+        anonymous: "Anonymous",
+        avgRating: "Average rating",
+        ratings: "ratings",
+        comments: "comments",
+        feedbackFillAll: "Please fill in all fields.",
+        feedbackSendError: "There was an issue sending your message.",
+        feedbackSent: "Your message was sent successfully.",
+        feedbackSendFailed: "Unable to send your message now.",
+        newsletterInvalid: "Please enter a valid email.",
+        newsletterSuccess: "Thank you. Subscription successful."
+    },
+    fr: {
+        headerTagline: "La Voix du Peuple 🇳🇪",
+        languageLabel: "Langue",
+        searchPlaceholder: "🔍 Rechercher des nouvelles ou vidéos...",
+        searchButton: "Rechercher",
+        navHome: "Accueil",
+        navLive: "TV en direct",
+        navNews: "Actualités",
+        navFeatured: "À la une",
+        navPrograms: "Programmes",
+        navVideos: "Liste TV",
+        navGallery: "Galerie",
+        navContact: "Contact",
+        heroSubtitle: "La voix du Niger vers le monde",
+        heroTopics: "Dernières nouvelles • Politique • Économie • Sports • Divertissement • Direct",
+        watchLiveButton: "🔴 REGARDER EN DIRECT",
+        carouselHeading: "⭐ Actualités à la une",
+        liveHeading: "🔴 TV EN DIRECT",
+        newsHeading: "📰 Dernières actualités",
+        featuredHeading: "⭐ Nouvelles vedettes",
+        featuredIntro: "Principaux points forts de M62 WEB TV.",
+        programsHeading: "📺 Grille des programmes",
+        programsIntro: "Programmes phares quotidiens sur M62 WEB TV.",
+        program1Title: "🎤 Journal du matin",
+        program1Desc: "Résumé quotidien des titres.",
+        program2Title: "📰 Analyse des infos",
+        program2Desc: "Analyse approfondie des événements clés.",
+        program3Title: "⚽ Sports",
+        program3Desc: "Temps forts sportifs locaux et internationaux.",
+        program4Title: "🌙 Émission du soir",
+        program4Desc: "Programme de grande écoute avec des experts.",
+        videosHeading: "🎬 Playlist TV",
+        galleryHeading: "🖼️ Images d'actualité",
+        galleryIntro: "Images sélectionnées des nouvelles et vidéos.",
+        contactHeading: "📞 Contactez-nous",
+        contactHours: "🕒 Lundi - Samedi: 08:00 - 20:00",
+        contactNamePlaceholder: "Votre nom",
+        contactEmailPlaceholder: "Email",
+        contactSubjectPlaceholder: "Sujet",
+        contactMessagePlaceholder: "Écrivez votre message...",
+        contactSubmit: "Envoyer",
+        newsletterHeading: "📩 Abonnez-vous aux dernières nouvelles",
+        newsletterPlaceholder: "Entrez votre email",
+        newsletterButton: "S'abonner",
+        footerText: "© 2026 M62 WEB TV NIGER | Powered by PDG MULTIMEDIA TV LTD",
+        loadingEngagement: "Chargement des notes et commentaires...",
+        engagementName: "Votre nom (optionnel)",
+        engagementMessage: "Écrire un commentaire",
+        engagementRate: "Noter cet élément",
+        noRating: "Pas de note",
+        send: "Envoyer",
+        noNewsYet: "Aucune actualité publiée.",
+        noFeaturedNews: "Aucune actualité à la une pour le moment.",
+        topStory: "À LA UNE",
+        featured: "VEDETTE",
+        noFeaturedInCarousel: "Aucune actualité vedette pour le moment.",
+        featuredNewsFallback: "Actualité vedette",
+        noVideosYet: "Aucune vidéo publiée.",
+        watchVideo: "Regarder la vidéo",
+        newsImage: "Image actualité",
+        videoThumbnail: "Miniature vidéo",
+        noGalleryYet: "Aucune image disponible. Ajoutez des couvertures dans l'admin.",
+        noCommentsYet: "Aucun commentaire.",
+        anonymous: "Anonyme",
+        avgRating: "Note moyenne",
+        ratings: "notes",
+        comments: "commentaires",
+        feedbackFillAll: "Veuillez remplir tous les champs.",
+        feedbackSendError: "Erreur lors de l'envoi du message.",
+        feedbackSent: "Votre message a été envoyé avec succès.",
+        feedbackSendFailed: "Impossible d'envoyer le message maintenant.",
+        newsletterInvalid: "Veuillez entrer un email valide.",
+        newsletterSuccess: "Merci. Inscription réussie."
+    },
+    ar: {
+        languageLabel: "اللغة",
+        searchPlaceholder: "🔍 ابحث عن الأخبار أو الفيديو...",
+        searchButton: "بحث",
+        navHome: "الرئيسية",
+        navLive: "بث مباشر",
+        navNews: "الأخبار",
+        navFeatured: "المميزة",
+        navPrograms: "البرامج",
+        navVideos: "قائمة التلفزيون",
+        navGallery: "الصور",
+        navContact: "اتصل بنا",
+        heroSubtitle: "صوت النيجر إلى العالم",
+        watchLiveButton: "🔴 شاهد البث",
+        newsHeading: "📰 آخر الأخبار",
+        contactHeading: "📞 اتصل بنا",
+        contactSubmit: "إرسال",
+        newsletterButton: "اشتراك"
+    }
+};
+
+function tr(key) {
+    const langPack = I18N[currentLanguage] || I18N[DEFAULT_LANGUAGE];
+    if (langPack && Object.prototype.hasOwnProperty.call(langPack, key)) {
+        return langPack[key];
+    }
+
+    return (I18N[DEFAULT_LANGUAGE] && I18N[DEFAULT_LANGUAGE][key]) || key;
+}
+
+function applyPageTranslations() {
+    if (typeof document === "undefined") {
+        return;
+    }
+
+    document.documentElement.lang = currentLanguage;
+
+    document.querySelectorAll("[data-i18n]").forEach((node) => {
+        const key = node.getAttribute("data-i18n");
+        if (key) {
+            node.textContent = tr(key);
+        }
+    });
+
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+        const key = node.getAttribute("data-i18n-placeholder");
+        if (key) {
+            node.setAttribute("placeholder", tr(key));
+        }
+    });
+}
+
+function initializeLanguageSelector() {
+    const saved = String(localStorage.getItem("m62Language") || DEFAULT_LANGUAGE).toLowerCase();
+    currentLanguage = SUPPORTED_LANGUAGES.includes(saved) ? saved : DEFAULT_LANGUAGE;
+
+    const select = document.getElementById("languageSelect");
+    if (select) {
+        select.value = currentLanguage;
+
+        select.addEventListener("change", async () => {
+            const chosen = String(select.value || DEFAULT_LANGUAGE).toLowerCase();
+            currentLanguage = SUPPORTED_LANGUAGES.includes(chosen) ? chosen : DEFAULT_LANGUAGE;
+            localStorage.setItem("m62Language", currentLanguage);
+
+            applyPageTranslations();
+
+            if (!isAdminPage()) {
+                await initializeHomePage();
+            }
+        });
+    }
+
+    applyPageTranslations();
+}
+
 const moderationState = {
     page: 1,
     pageSize: 25,
@@ -1159,14 +1462,14 @@ async function createRating(itemType, itemId, rating) {
 function renderEngagementWidget(itemType, itemId) {
     return `
 <div class="engagement-widget" data-item-type="${itemType}" data-item-id="${itemId}">
-    <div class="engagement-summary">Loading ratings and comments...</div>
+    <div class="engagement-summary">${escapeHtml(tr("loadingEngagement"))}</div>
     <form class="engagement-form" data-item-type="${itemType}" data-item-id="${itemId}">
-        <input type="text" name="name" placeholder="Your name (optional)">
-        <textarea name="message" rows="3" placeholder="Write a comment"></textarea>
+        <input type="text" name="name" placeholder="${escapeHtml(tr("engagementName"))}">
+        <textarea name="message" rows="3" placeholder="${escapeHtml(tr("engagementMessage"))}"></textarea>
         <label>
-            Rate this item
+            ${escapeHtml(tr("engagementRate"))}
             <select name="rating">
-                <option value="">No rating</option>
+                <option value="">${escapeHtml(tr("noRating"))}</option>
                 <option value="1">1 star</option>
                 <option value="2">2 stars</option>
                 <option value="3">3 stars</option>
@@ -1174,7 +1477,7 @@ function renderEngagementWidget(itemType, itemId) {
                 <option value="5">5 stars</option>
             </select>
         </label>
-        <button type="submit">Send</button>
+        <button type="submit">${escapeHtml(tr("send"))}</button>
         <p class="engagement-feedback" aria-live="polite"></p>
     </form>
     <div class="engagement-comments"></div>
@@ -1194,7 +1497,7 @@ async function renderHomeNews() {
     const news = result.data || [];
 
     if (!news.length) {
-        container.innerHTML = "<p>No news published yet.</p>";
+        container.innerHTML = `<p>${escapeHtml(tr("noNewsYet"))}</p>`;
         return;
     }
 
@@ -1221,13 +1524,13 @@ async function renderFeaturedNews() {
     const news = (result.data || []).slice(0, 4);
 
     if (!news.length) {
-        container.innerHTML = "<p>No featured news available yet.</p>";
+        container.innerHTML = `<p>${escapeHtml(tr("noFeaturedNews"))}</p>`;
         return;
     }
 
     container.innerHTML = news.map((item, index) => `
 <article class="featured-card">
-    <span class="featured-badge">${index === 0 ? "TOP STORY" : "FEATURED"}</span>
+    <span class="featured-badge">${index === 0 ? escapeHtml(tr("topStory")) : escapeHtml(tr("featured"))}</span>
     <img class="featured-cover" loading="lazy" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
     <h3>${escapeHtml(item.title)}</h3>
     <p>${escapeHtml(item.summary || item.content || "")}</p>
@@ -1286,7 +1589,7 @@ async function renderFeaturedCarousel() {
         track.innerHTML = `
 <article class="carousel-item">
     <h3>M62 WEB TV</h3>
-    <p>Babu fitattun labarai yanzu. Da fatan a kara labarai daga admin.</p>
+    <p>${escapeHtml(tr("noFeaturedInCarousel"))}</p>
 </article>`;
         homeCarouselIndex = 0;
         updateFeaturedCarouselPosition();
@@ -1295,7 +1598,7 @@ async function renderFeaturedCarousel() {
 
     track.innerHTML = homeCarouselItems.map((item) => `
 <article class="carousel-item">
-    <h3>${escapeHtml(item.title || "Fitaccen Labari")}</h3>
+    <h3>${escapeHtml(item.title || tr("featuredNewsFallback"))}</h3>
     <p>${escapeHtml(item.summary || item.content || "")}</p>
 </article>
 `).join("");
@@ -1359,7 +1662,7 @@ async function renderHomeVideos() {
     const videos = result.data || [];
 
     if (!videos.length) {
-        container.innerHTML = "<p>No videos published yet.</p>";
+        container.innerHTML = `<p>${escapeHtml(tr("noVideosYet"))}</p>`;
         return;
     }
 
@@ -1370,7 +1673,7 @@ async function renderHomeVideos() {
     <p>${escapeHtml(video.description || "")}</p>
     ${video.videoUrl && video.videoUrl.includes('/uploads/')
         ? `<video controls style="width:100%;max-height:240px;" src="${escapeHtml(video.videoUrl)}"></video>`
-        : `<p><a href="${escapeHtml(video.videoUrl)}" target="_blank" rel="noopener noreferrer">Watch video</a></p>`}
+        : `<p><a href="${escapeHtml(video.videoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(tr("watchVideo"))}</a></p>`}
     ${renderEngagementWidget("video", video.id || `video_${index + 1}`)}
 </article>
 `).join("");
@@ -1392,20 +1695,20 @@ async function renderHomeGallery() {
         .filter((item) => String(item.coverImageUrl || "").trim())
         .map((item) => ({
             url: item.coverImageUrl,
-            caption: item.title || "News image"
+            caption: item.title || tr("newsImage")
         }));
 
     const videoImages = (videoResult.data || [])
         .filter((item) => String(item.thumbnailUrl || "").trim())
         .map((item) => ({
             url: item.thumbnailUrl,
-            caption: item.title || "Video thumbnail"
+            caption: item.title || tr("videoThumbnail")
         }));
 
     const items = [...newsImages, ...videoImages].slice(0, 12);
 
     if (!items.length) {
-        container.innerHTML = "<p>No gallery images available yet. Add cover images/thumbnails from admin pages.</p>";
+        container.innerHTML = `<p>${escapeHtml(tr("noGalleryYet"))}</p>`;
         return;
     }
 
@@ -1419,12 +1722,12 @@ async function renderHomeGallery() {
 
 function formatComments(comments) {
     if (!comments.length) {
-        return "<p class=\"engagement-empty\">No comments yet.</p>";
+        return `<p class="engagement-empty">${escapeHtml(tr("noCommentsYet"))}</p>`;
     }
 
     return comments.map((comment) => `
 <div class="comment-item">
-    <p class="comment-meta">${escapeHtml(comment.name || "Anonymous")} - ${new Date(comment.createdAt).toLocaleString()}</p>
+    <p class="comment-meta">${escapeHtml(comment.name || tr("anonymous"))} - ${new Date(comment.createdAt).toLocaleString()}</p>
     <p>${escapeHtml(comment.message)}</p>
 </div>
 `).join("");
@@ -2537,7 +2840,7 @@ async function refreshEngagementWidgets() {
         const commentsNode = widget.querySelector(".engagement-comments");
 
         const data = await getEngagement(itemType, itemId);
-        summaryNode.innerText = `Average rating: ${data.summary.averageRating}/5 (${data.summary.ratingsCount} ratings) • ${data.summary.commentsCount} comments`;
+        summaryNode.innerText = `${tr("avgRating")}: ${data.summary.averageRating}/5 (${data.summary.ratingsCount} ${tr("ratings")}) • ${data.summary.commentsCount} ${tr("comments")}`;
         commentsNode.innerHTML = formatComments(data.comments.slice(0, 5));
     }
 }
@@ -2644,7 +2947,7 @@ function initializePublicContactForms() {
 
             if (!name || !email || !subject || !message) {
                 if (contactFeedback) {
-                    contactFeedback.textContent = "Da fatan a cika dukkan filaye.";
+                    contactFeedback.textContent = tr("feedbackFillAll");
                     contactFeedback.className = "form-feedback error";
                 }
                 return;
@@ -2666,18 +2969,18 @@ function initializePublicContactForms() {
                 const payload = await response.json().catch(() => ({}));
 
                 if (!response.ok) {
-                    throw new Error(payload.message || "Akwai matsala wajen tura sako.");
+                    throw new Error(payload.message || tr("feedbackSendError"));
                 }
 
                 contactForm.reset();
 
                 if (contactFeedback) {
-                    contactFeedback.textContent = payload.message || "An aika sakonka cikin nasara.";
+                    contactFeedback.textContent = payload.message || tr("feedbackSent");
                     contactFeedback.className = "form-feedback";
                 }
             } catch (error) {
                 if (contactFeedback) {
-                    contactFeedback.textContent = error.message || "An kasa aika sako yanzu.";
+                    contactFeedback.textContent = error.message || tr("feedbackSendFailed");
                     contactFeedback.className = "form-feedback error";
                 }
             } finally {
@@ -2699,7 +3002,7 @@ function initializePublicContactForms() {
 
             if (!email || !email.includes("@")) {
                 if (newsletterFeedback) {
-                    newsletterFeedback.textContent = "Shigar da ingantaccen imel.";
+                    newsletterFeedback.textContent = tr("newsletterInvalid");
                     newsletterFeedback.className = "form-feedback error";
                 }
                 return;
@@ -2713,7 +3016,7 @@ function initializePublicContactForms() {
 
             newsletterForm.reset();
             if (newsletterFeedback) {
-                newsletterFeedback.textContent = "Nagode. An yi rijista cikin nasara.";
+                newsletterFeedback.textContent = tr("newsletterSuccess");
                 newsletterFeedback.className = "form-feedback";
             }
         });
@@ -2733,6 +3036,7 @@ window.addEventListener("load", loadLiveTV);
 window.addEventListener("load", loadHomeLiveTV);
 window.addEventListener("load", incrementVisitorCounterIfPublicPage);
 window.addEventListener("load", updateDashboardStats);
+window.addEventListener("load", initializeLanguageSelector);
 window.addEventListener("load", initializeHomePage);
 window.addEventListener("load", initializePublicContactForms);
 window.addEventListener("load", initializeModerationPage);

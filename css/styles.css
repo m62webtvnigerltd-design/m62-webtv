@@ -594,6 +594,27 @@ body{
     cursor:pointer;
 }
 
+.language-switcher{
+    margin:12px auto 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+}
+
+.language-switcher label{
+    font-weight:bold;
+    color:#0d1b2a;
+}
+
+.language-switcher select{
+    padding:8px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    font:inherit;
+    min-width:150px;
+}
+
 .contact-form button:hover,
 .newsletter-form button:hover{
     background:#1b263b;
@@ -699,6 +720,10 @@ footer{
         height:300px;
     }
             .search-bar{
+                flex-direction:column;
+            }
+
+            .language-switcher{
                 flex-direction:column;
             }
             .carousel-item h3{

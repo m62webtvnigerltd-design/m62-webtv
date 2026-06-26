@@ -20,22 +20,31 @@
 <header class="main-header">
     <img src="logo.png" alt="M62 WEB TV Logo" class="logo" decoding="async">
     <h1>M62 WEB TV NIGER</h1>
-    <p>La Voix Du Peuple | Muryar Jama'a 🇳🇪</p>
+    <p id="headerTagline" data-i18n="headerTagline">La Voix Du Peuple | Muryar Jama'a 🇳🇪</p>
     <div class="search-bar">
-        <input type="text" id="homeSearchInput" placeholder="🔍 Nema labari ko bidiyo...">
-        <button type="button" id="homeSearchButton">Nema</button>
+        <input type="text" id="homeSearchInput" data-i18n-placeholder="searchPlaceholder" placeholder="🔍 Nema labari ko bidiyo...">
+        <button type="button" id="homeSearchButton" data-i18n="searchButton">Nema</button>
+    </div>
+    <div class="language-switcher">
+        <label for="languageSelect" id="languageLabel" data-i18n="languageLabel">Yare</label>
+        <select id="languageSelect" aria-label="Language selector">
+            <option value="ha">Hausa</option>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="ar">Arabic</option>
+        </select>
     </div>
 </header>
 
 <nav class="navbar">
-    <a href="#home">Home</a>
-    <a href="#live">Live TV</a>
-    <a href="#news">Labarai</a>
-    <a href="#featured">Fittatattu</a>
-    <a href="#programs">Shirye-shirye</a>
-    <a href="#videos">Jerin Talabiji</a>
-    <a href="#gallery">Hotuna</a>
-    <a href="#contact">Tuntube Mu</a>
+    <a href="#home" id="navHome" data-i18n="navHome">Home</a>
+    <a href="#live" id="navLive" data-i18n="navLive">Live TV</a>
+    <a href="#news" id="navNews" data-i18n="navNews">Labarai</a>
+    <a href="#featured" id="navFeatured" data-i18n="navFeatured">Fittatattu</a>
+    <a href="#programs" id="navPrograms" data-i18n="navPrograms">Shirye-shirye</a>
+    <a href="#videos" id="navVideos" data-i18n="navVideos">Jerin Talabiji</a>
+    <a href="#gallery" id="navGallery" data-i18n="navGallery">Hotuna</a>
+    <a href="#contact" id="navContact" data-i18n="navContact">Tuntube Mu</a>
 </nav>
 
 <section class="hero" id="home">
@@ -44,15 +53,15 @@
 
         <h1>M62 WEB TV NIGER</h1>
 
-        <p>
+        <p id="heroSubtitle" data-i18n="heroSubtitle">
             The Voice of Niger to the World
         </p>
 
-        <h3>
+        <h3 id="heroTopics" data-i18n="heroTopics">
             Breaking News • Politics • Economy • Sports • Entertainment • Live TV
         </h3>
 
-        <a href="#live" class="watch-btn">
+        <a href="#live" class="watch-btn" id="watchLiveButton" data-i18n="watchLiveButton">
             🔴 WATCH LIVE
         </a>
 
@@ -61,7 +70,7 @@
 </section>
 
 <section class="carousel-section" id="carousel">
-    <h2>⭐ Fitattun Labarai</h2>
+    <h2 id="carouselHeading" data-i18n="carouselHeading">⭐ Fitattun Labarai</h2>
     <div class="carousel-container" id="featuredCarousel">
         <div class="carousel-track" id="featuredCarouselTrack"></div>
         <button type="button" class="carousel-nav prev" id="carouselPrev">‹</button>
@@ -70,93 +79,93 @@
 </section>
 
 <section class="live-section" id="live">
-    <h2>🔴 LIVE TV</h2>
+    <h2 id="liveHeading" data-i18n="liveHeading">🔴 LIVE TV</h2>
     <div class="video-box">
         <iframe id="homeLiveTV" src="" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
 </section>
 
 <section class="news-section" id="news">
-    <h2>📰 Latest News</h2>
+    <h2 id="newsHeading" data-i18n="newsHeading">📰 Latest News</h2>
     <div id="homeNews" class="news-grid"></div>
 </section>
 
 <section class="featured-section" id="featured">
-    <h2>⭐ Fittatun Labarai</h2>
-    <p class="section-intro">Manyan labaran da suka fi daukar hankali daga M62 WEB TV.</p>
+    <h2 id="featuredHeading" data-i18n="featuredHeading">⭐ Fittatun Labarai</h2>
+    <p class="section-intro" id="featuredIntro" data-i18n="featuredIntro">Manyan labaran da suka fi daukar hankali daga M62 WEB TV.</p>
     <div id="featuredNews" class="featured-grid"></div>
 </section>
 
 <section class="programs-section" id="programs">
-    <h2>📺 Jadawalin Shirye-shirye</h2>
-    <p class="section-intro">Lokutan manyan shirye-shiryen M62 WEB TV na yau da kullum.</p>
+    <h2 id="programsHeading" data-i18n="programsHeading">📺 Jadawalin Shirye-shirye</h2>
+    <p class="section-intro" id="programsIntro" data-i18n="programsIntro">Lokutan manyan shirye-shiryen M62 WEB TV na yau da kullum.</p>
     <div class="program-grid">
         <article class="program-card">
-            <h3>🎤 Labaran Safe</h3>
-            <p>Takaitattun labarai da bayanan rana.</p>
+            <h3 id="program1Title" data-i18n="program1Title">🎤 Labaran Safe</h3>
+            <p id="program1Desc" data-i18n="program1Desc">Takaitattun labarai da bayanan rana.</p>
             <span class="program-time">06:30 - 08:00</span>
         </article>
         <article class="program-card">
-            <h3>📰 Nazarin Labarai</h3>
-            <p>Tattaunawa kan manyan abubuwan da ke faruwa.</p>
+            <h3 id="program2Title" data-i18n="program2Title">📰 Nazarin Labarai</h3>
+            <p id="program2Desc" data-i18n="program2Desc">Tattaunawa kan manyan abubuwan da ke faruwa.</p>
             <span class="program-time">10:00 - 11:00</span>
         </article>
         <article class="program-card">
-            <h3>⚽ Wasanni</h3>
-            <p>Sakamako da nazarin wasanni na gida da waje.</p>
+            <h3 id="program3Title" data-i18n="program3Title">⚽ Wasanni</h3>
+            <p id="program3Desc" data-i18n="program3Desc">Sakamako da nazarin wasanni na gida da waje.</p>
             <span class="program-time">16:00 - 17:00</span>
         </article>
         <article class="program-card">
-            <h3>🌙 Shirin Yamma</h3>
-            <p>Babban shirin dare da bakuncin masana.</p>
+            <h3 id="program4Title" data-i18n="program4Title">🌙 Shirin Yamma</h3>
+            <p id="program4Desc" data-i18n="program4Desc">Babban shirin dare da bakuncin masana.</p>
             <span class="program-time">20:00 - 22:00</span>
         </article>
     </div>
 </section>
 
 <section class="videos-section" id="videos">
-    <h2>🎬 Jerin Talabiji</h2>
+    <h2 id="videosHeading" data-i18n="videosHeading">🎬 Jerin Talabiji</h2>
     <div id="homeVideos" class="video-grid"></div>
 </section>
 
 <section class="gallery-section" id="gallery">
-    <h2>🖼️ Hotunan Labarai</h2>
-    <p class="section-intro">Zababbun hotuna daga labarai da bidiyo.</p>
+    <h2 id="galleryHeading" data-i18n="galleryHeading">🖼️ Hotunan Labarai</h2>
+    <p class="section-intro" id="galleryIntro" data-i18n="galleryIntro">Zababbun hotuna daga labarai da bidiyo.</p>
     <div id="homeGallery" class="gallery-grid"></div>
 </section>
 
 <section class="contact-section" id="contact">
-    <h2>📞 Tuntube Mu</h2>
+    <h2 id="contactHeading" data-i18n="contactHeading">📞 Tuntube Mu</h2>
     <div class="contact-container">
         <div class="contact-info-card">
             <h3>M62 WEB TV NIGER</h3>
             <p>📍 Niamey, Niger</p>
             <p>📧 info@m62webtv.ne</p>
             <p>📱 +227 76 37 47 97</p>
-            <p>🕒 Litinin - Asabar: 08:00 - 20:00</p>
+            <p id="contactHours" data-i18n="contactHours">🕒 Litinin - Asabar: 08:00 - 20:00</p>
         </div>
         <form id="contactForm" class="contact-form">
-            <input type="text" id="contactName" placeholder="Sunanka" required>
-            <input type="email" id="contactEmail" placeholder="Imel" required>
-            <input type="text" id="contactSubject" placeholder="Taken sako" required>
-            <textarea id="contactMessage" rows="5" placeholder="Rubuta sakonka..." required></textarea>
-            <button type="submit" id="contactSubmitBtn">Aika Sako</button>
+            <input type="text" id="contactName" data-i18n-placeholder="contactNamePlaceholder" placeholder="Sunanka" required>
+            <input type="email" id="contactEmail" data-i18n-placeholder="contactEmailPlaceholder" placeholder="Imel" required>
+            <input type="text" id="contactSubject" data-i18n-placeholder="contactSubjectPlaceholder" placeholder="Taken sako" required>
+            <textarea id="contactMessage" rows="5" data-i18n-placeholder="contactMessagePlaceholder" placeholder="Rubuta sakonka..." required></textarea>
+            <button type="submit" id="contactSubmitBtn" data-i18n="contactSubmit">Aika Sako</button>
             <p id="contactFormFeedback" class="form-feedback" aria-live="polite"></p>
         </form>
     </div>
 
     <div class="newsletter-box">
-        <h3>📩 Yi rijista domin samun sabbin labarai</h3>
+        <h3 id="newsletterHeading" data-i18n="newsletterHeading">📩 Yi rijista domin samun sabbin labarai</h3>
         <form id="newsletterForm" class="newsletter-form">
-            <input type="email" id="newsletterEmail" placeholder="Shigar da imel dinka" required>
-            <button type="submit">Yi Rijista</button>
+            <input type="email" id="newsletterEmail" data-i18n-placeholder="newsletterPlaceholder" placeholder="Shigar da imel dinka" required>
+            <button type="submit" data-i18n="newsletterButton">Yi Rijista</button>
         </form>
         <p id="newsletterFeedback" class="form-feedback" aria-live="polite"></p>
     </div>
 </section>
 
 <footer>
-    <p>© 2026 M62 WEB TV NIGER | Powered by PDG MULTIMEDIA TV LTD</p>
+    <p id="footerText" data-i18n="footerText">© 2026 M62 WEB TV NIGER | Powered by PDG MULTIMEDIA TV LTD</p>
 </footer>
 
 <script src="js/main.js" defer></script>
