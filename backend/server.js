@@ -615,6 +615,25 @@ function countModerationComments(store) {
     }, 0);
 }
 
+function countEngagementTotals(store) {
+    return ['news', 'video'].reduce((totals, itemType) => {
+        const bucket = store[itemType] || {};
+
+        Object.values(bucket).forEach((item) => {
+            const comments = Array.isArray(item.comments) ? item.comments : [];
+            const ratings = Array.isArray(item.ratings) ? item.ratings : [];
+
+            totals.commentsCount += comments.length;
+            totals.ratingsCount += ratings.length;
+        });
+
+        return totals;
+    }, {
+        commentsCount: 0,
+        ratingsCount: 0
+    });
+}
+
 function getItemBucket(store, itemType, itemId) {
     if (!store[itemType]) {
         store[itemType] = {};
@@ -970,6 +989,7 @@ app.get('/api/stats/dashboard', async (req, res, next) => {
     try {
         const statsStore = readStatsStore();
         const engagementStore = readEngagementStore();
+        const engagementTotals = countEngagementTotals(engagementStore);
         let newsCount = 0;
         let videosCount = 0;
         let usersCount = 0;
@@ -986,7 +1006,9 @@ app.get('/api/stats/dashboard', async (req, res, next) => {
                 newsCount,
                 videosCount,
                 usersCount,
-                commentsCount: countModerationComments(engagementStore),
+                commentsCount: engagementTotals.commentsCount,
+                ratingsCount: engagementTotals.ratingsCount,
+                engagementCount: engagementTotals.commentsCount + engagementTotals.ratingsCount,
                 visitorsCount: statsStore.visitorsCount,
                 mongoReady
             }

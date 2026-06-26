@@ -78,17 +78,49 @@ async function fetchDashboardStats() {
         return payload.data || {};
     } catch (error) {
         return {
+            newsCount: 0,
+            videosCount: 0,
+            usersCount: 0,
+            commentsCount: 0,
+            ratingsCount: 0,
+            engagementCount: 0,
             visitorsCount: getLocalVisitorCount()
         };
     }
 }
 
-async function updateDashboardVisitorCount() {
+async function updateDashboardStats() {
+    const totalNews = document.getElementById("totalNews");
+    const totalVideos = document.getElementById("totalVideos");
     const totalVisitors = document.getElementById("totalVisitors");
+    const totalUsers = document.getElementById("totalUsers");
+    const totalComments = document.getElementById("totalComments");
+    const totalEngagement = document.getElementById("totalEngagement");
+
+    const stats = await fetchDashboardStats();
+
+    if (totalNews) {
+        totalNews.innerText = String(stats.newsCount || 0);
+    }
+
+    if (totalVideos) {
+        totalVideos.innerText = String(stats.videosCount || 0);
+    }
 
     if (totalVisitors) {
-        const stats = await fetchDashboardStats();
         totalVisitors.innerText = String(stats.visitorsCount || 0);
+    }
+
+    if (totalUsers) {
+        totalUsers.innerText = String(stats.usersCount || 0);
+    }
+
+    if (totalComments) {
+        totalComments.innerText = String(stats.commentsCount || 0);
+    }
+
+    if (totalEngagement) {
+        totalEngagement.innerText = String(stats.engagementCount || 0);
     }
 }
 
@@ -371,14 +403,9 @@ async function publishNews() {
 async function loadNews() {
     const result = await fetchNewsList({ status: "all", pageSize: 200 });
     const news = result.data || [];
-    const totalNews = document.getElementById("totalNews");
     const table = document.getElementById("latestNews");
 
-    if (totalNews) {
-        totalNews.innerText = news.length;
-    }
-
-    updateDashboardVisitorCount();
+    updateDashboardStats();
 
     if (!table) {
         return;
@@ -684,12 +711,9 @@ async function publishVideo() {
 async function loadVideos() {
     const result = await fetchVideosList({ status: "all", pageSize: 100 });
     const videos = result.data || [];
-    const totalVideos = document.getElementById("totalVideos");
     const table = document.getElementById("videoTable");
 
-    if (totalVideos) {
-        totalVideos.innerText = String(videos.length);
-    }
+    updateDashboardStats();
 
     if (!table) {
         return;
@@ -1973,7 +1997,7 @@ window.addEventListener("load", loadVideos);
 window.addEventListener("load", loadLiveTV);
 window.addEventListener("load", loadHomeLiveTV);
 window.addEventListener("load", incrementVisitorCounterIfPublicPage);
-window.addEventListener("load", updateDashboardVisitorCount);
+window.addEventListener("load", updateDashboardStats);
 window.addEventListener("load", initializeHomePage);
 window.addEventListener("load", initializeModerationPage);
 window.addEventListener("load", initializeAdminLoginPage);
