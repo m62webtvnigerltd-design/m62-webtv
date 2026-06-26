@@ -21,16 +21,21 @@
     <img src="logo.png" alt="M62 WEB TV Logo" class="logo" decoding="async">
     <h1>M62 WEB TV NIGER</h1>
     <p>La Voix Du Peuple | Muryar Jama'a 🇳🇪</p>
+    <div class="search-bar">
+        <input type="text" id="homeSearchInput" placeholder="🔍 Nema labari ko bidiyo...">
+        <button type="button" id="homeSearchButton">Nema</button>
+    </div>
 </header>
 
 <nav class="navbar">
     <a href="#home">Home</a>
     <a href="#live">Live TV</a>
-    <a href="#news">News</a>
+    <a href="#news">Labarai</a>
     <a href="#featured">Fittatattu</a>
-    <a href="#videos">Videos</a>
+    <a href="#programs">Shirye-shirye</a>
+    <a href="#videos">Jerin Talabiji</a>
     <a href="#gallery">Hotuna</a>
-    <a href="#contact">Contact</a>
+    <a href="#contact">Tuntube Mu</a>
 </nav>
 
 <section class="hero" id="home">
@@ -55,6 +60,15 @@
 
 </section>
 
+<section class="carousel-section" id="carousel">
+    <h2>⭐ Fitattun Labarai</h2>
+    <div class="carousel-container" id="featuredCarousel">
+        <div class="carousel-track" id="featuredCarouselTrack"></div>
+        <button type="button" class="carousel-nav prev" id="carouselPrev">‹</button>
+        <button type="button" class="carousel-nav next" id="carouselNext">›</button>
+    </div>
+</section>
+
 <section class="live-section" id="live">
     <h2>🔴 LIVE TV</h2>
     <div class="video-box">
@@ -73,8 +87,35 @@
     <div id="featuredNews" class="featured-grid"></div>
 </section>
 
+<section class="programs-section" id="programs">
+    <h2>📺 Jadawalin Shirye-shirye</h2>
+    <p class="section-intro">Lokutan manyan shirye-shiryen M62 WEB TV na yau da kullum.</p>
+    <div class="program-grid">
+        <article class="program-card">
+            <h3>🎤 Labaran Safe</h3>
+            <p>Takaitattun labarai da bayanan rana.</p>
+            <span class="program-time">06:30 - 08:00</span>
+        </article>
+        <article class="program-card">
+            <h3>📰 Nazarin Labarai</h3>
+            <p>Tattaunawa kan manyan abubuwan da ke faruwa.</p>
+            <span class="program-time">10:00 - 11:00</span>
+        </article>
+        <article class="program-card">
+            <h3>⚽ Wasanni</h3>
+            <p>Sakamako da nazarin wasanni na gida da waje.</p>
+            <span class="program-time">16:00 - 17:00</span>
+        </article>
+        <article class="program-card">
+            <h3>🌙 Shirin Yamma</h3>
+            <p>Babban shirin dare da bakuncin masana.</p>
+            <span class="program-time">20:00 - 22:00</span>
+        </article>
+    </div>
+</section>
+
 <section class="videos-section" id="videos">
-    <h2>🎥 Latest Videos</h2>
+    <h2>🎬 Jerin Talabiji</h2>
     <div id="homeVideos" class="video-grid"></div>
 </section>
 
@@ -84,7 +125,37 @@
     <div id="homeGallery" class="gallery-grid"></div>
 </section>
 
-<footer id="contact">
+<section class="contact-section" id="contact">
+    <h2>📞 Tuntube Mu</h2>
+    <div class="contact-container">
+        <div class="contact-info-card">
+            <h3>M62 WEB TV NIGER</h3>
+            <p>📍 Niamey, Niger</p>
+            <p>📧 info@m62webtv.ne</p>
+            <p>📱 +227 76 37 47 97</p>
+            <p>🕒 Litinin - Asabar: 08:00 - 20:00</p>
+        </div>
+        <form id="contactForm" class="contact-form">
+            <input type="text" id="contactName" placeholder="Sunanka" required>
+            <input type="email" id="contactEmail" placeholder="Imel" required>
+            <input type="text" id="contactSubject" placeholder="Taken sako" required>
+            <textarea id="contactMessage" rows="5" placeholder="Rubuta sakonka..." required></textarea>
+            <button type="submit" id="contactSubmitBtn">Aika Sako</button>
+            <p id="contactFormFeedback" class="form-feedback" aria-live="polite"></p>
+        </form>
+    </div>
+
+    <div class="newsletter-box">
+        <h3>📩 Yi rijista domin samun sabbin labarai</h3>
+        <form id="newsletterForm" class="newsletter-form">
+            <input type="email" id="newsletterEmail" placeholder="Shigar da imel dinka" required>
+            <button type="submit">Yi Rijista</button>
+        </form>
+        <p id="newsletterFeedback" class="form-feedback" aria-live="polite"></p>
+    </div>
+</section>
+
+<footer>
     <p>© 2026 M62 WEB TV NIGER | Powered by PDG MULTIMEDIA TV LTD</p>
 </footer>
 

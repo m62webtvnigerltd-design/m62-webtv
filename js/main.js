@@ -1235,6 +1235,119 @@ async function renderFeaturedNews() {
 `).join("");
 }
 
+let homeCarouselIndex = 0;
+let homeCarouselItems = [];
+
+function updateFeaturedCarouselPosition() {
+    const track = document.getElementById("featuredCarouselTrack");
+    if (!track || !homeCarouselItems.length) {
+        return;
+    }
+
+    track.style.transform = `translateX(-${homeCarouselIndex * 100}%)`;
+}
+
+function initializeFeaturedCarouselControls() {
+    const prevBtn = document.getElementById("carouselPrev");
+    const nextBtn = document.getElementById("carouselNext");
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+            if (!homeCarouselItems.length) {
+                return;
+            }
+            homeCarouselIndex = (homeCarouselIndex - 1 + homeCarouselItems.length) % homeCarouselItems.length;
+            updateFeaturedCarouselPosition();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+            if (!homeCarouselItems.length) {
+                return;
+            }
+            homeCarouselIndex = (homeCarouselIndex + 1) % homeCarouselItems.length;
+            updateFeaturedCarouselPosition();
+        });
+    }
+}
+
+async function renderFeaturedCarousel() {
+    const track = document.getElementById("featuredCarouselTrack");
+
+    if (!track) {
+        return;
+    }
+
+    const result = await fetchNewsList({ status: "published", pageSize: 6 });
+    homeCarouselItems = (result.data || []).slice(0, 4);
+
+    if (!homeCarouselItems.length) {
+        track.innerHTML = `
+<article class="carousel-item">
+    <h3>M62 WEB TV</h3>
+    <p>Babu fitattun labarai yanzu. Da fatan a kara labarai daga admin.</p>
+</article>`;
+        homeCarouselIndex = 0;
+        updateFeaturedCarouselPosition();
+        return;
+    }
+
+    track.innerHTML = homeCarouselItems.map((item) => `
+<article class="carousel-item">
+    <h3>${escapeHtml(item.title || "Fitaccen Labari")}</h3>
+    <p>${escapeHtml(item.summary || item.content || "")}</p>
+</article>
+`).join("");
+
+    homeCarouselIndex = 0;
+    updateFeaturedCarouselPosition();
+}
+
+function initializeHomeSearch() {
+    const input = document.getElementById("homeSearchInput");
+    const button = document.getElementById("homeSearchButton");
+
+    if (!input || !button) {
+        return;
+    }
+
+    const runSearch = () => {
+        const query = String(input.value || "").trim().toLowerCase();
+        const selectors = [
+            ".news-card",
+            ".featured-card",
+            ".video-card",
+            ".gallery-card"
+        ];
+
+        const cards = document.querySelectorAll(selectors.join(","));
+        let firstMatch = null;
+
+        cards.forEach((card) => {
+            const text = String(card.textContent || "").toLowerCase();
+            const matched = !query || text.includes(query);
+            card.style.display = matched ? "" : "none";
+
+            if (!firstMatch && matched) {
+                firstMatch = card;
+            }
+        });
+
+        if (query && firstMatch) {
+            firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    };
+
+    button.addEventListener("click", runSearch);
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            runSearch();
+        }
+    });
+}
+
 async function renderHomeVideos() {
     const container = document.getElementById("homeVideos");
 
@@ -2504,12 +2617,107 @@ function bindEngagementForms() {
 async function initializeHomePage() {
     ensureContentIds();
     await Promise.all([
+        renderFeaturedCarousel(),
         renderHomeNews(),
         renderFeaturedNews(),
         renderHomeVideos(),
         renderHomeGallery()
     ]);
+    initializeFeaturedCarouselControls();
+    initializeHomeSearch();
     await refreshEngagementWidgets();
+}
+
+function initializePublicContactForms() {
+    const contactForm = document.getElementById("contactForm");
+    const contactFeedback = document.getElementById("contactFormFeedback");
+    const contactSubmitBtn = document.getElementById("contactSubmitBtn");
+
+    if (contactForm) {
+        contactForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const name = String(document.getElementById("contactName")?.value || "").trim();
+            const email = String(document.getElementById("contactEmail")?.value || "").trim();
+            const subject = String(document.getElementById("contactSubject")?.value || "").trim();
+            const message = String(document.getElementById("contactMessage")?.value || "").trim();
+
+            if (!name || !email || !subject || !message) {
+                if (contactFeedback) {
+                    contactFeedback.textContent = "Da fatan a cika dukkan filaye.";
+                    contactFeedback.className = "form-feedback error";
+                }
+                return;
+            }
+
+            if (contactSubmitBtn) {
+                contactSubmitBtn.disabled = true;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/contact`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ name, email, subject, message })
+                });
+
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(payload.message || "Akwai matsala wajen tura sako.");
+                }
+
+                contactForm.reset();
+
+                if (contactFeedback) {
+                    contactFeedback.textContent = payload.message || "An aika sakonka cikin nasara.";
+                    contactFeedback.className = "form-feedback";
+                }
+            } catch (error) {
+                if (contactFeedback) {
+                    contactFeedback.textContent = error.message || "An kasa aika sako yanzu.";
+                    contactFeedback.className = "form-feedback error";
+                }
+            } finally {
+                if (contactSubmitBtn) {
+                    contactSubmitBtn.disabled = false;
+                }
+            }
+        });
+    }
+
+    const newsletterForm = document.getElementById("newsletterForm");
+    const newsletterInput = document.getElementById("newsletterEmail");
+    const newsletterFeedback = document.getElementById("newsletterFeedback");
+
+    if (newsletterForm && newsletterInput) {
+        newsletterForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const email = String(newsletterInput.value || "").trim().toLowerCase();
+
+            if (!email || !email.includes("@")) {
+                if (newsletterFeedback) {
+                    newsletterFeedback.textContent = "Shigar da ingantaccen imel.";
+                    newsletterFeedback.className = "form-feedback error";
+                }
+                return;
+            }
+
+            const subscribers = readStore("newsletterSubscribers", []);
+            if (!subscribers.includes(email)) {
+                subscribers.push(email);
+                writeStore("newsletterSubscribers", subscribers);
+            }
+
+            newsletterForm.reset();
+            if (newsletterFeedback) {
+                newsletterFeedback.textContent = "Nagode. An yi rijista cikin nasara.";
+                newsletterFeedback.className = "form-feedback";
+            }
+        });
+    }
 }
 
 function initializeAdminRouteProtection() {
@@ -2526,6 +2734,7 @@ window.addEventListener("load", loadHomeLiveTV);
 window.addEventListener("load", incrementVisitorCounterIfPublicPage);
 window.addEventListener("load", updateDashboardStats);
 window.addEventListener("load", initializeHomePage);
+window.addEventListener("load", initializePublicContactForms);
 window.addEventListener("load", initializeModerationPage);
 window.addEventListener("load", initializeAdminLoginPage);
 window.addEventListener("load", initializeNewsManagementPage);
