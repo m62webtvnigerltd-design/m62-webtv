@@ -25,6 +25,31 @@
         <button class="admin-btn" type="submit" id="adminLoginSubmit" style="width:100%; margin-top:10px;">Sign In</button>
     </form>
 
+    <div class="admin-links-row" style="margin-top:10px;">
+        <a href="#" id="openPasswordResetRequest">Forgot password?</a>
+        <a href="#" id="openPasswordResetConfirm">Have reset token?</a>
+    </div>
+
+    <form id="adminPasswordResetRequestForm" style="display:none; margin-top:12px;">
+        <div class="admin-field">
+            <label for="adminResetEmail">Reset Email</label>
+            <input type="email" id="adminResetEmail" autocomplete="email" placeholder="you@example.com">
+        </div>
+        <button class="admin-secondary-btn" type="submit" id="adminResetRequestSubmit" style="width:100%; margin-top:10px;">Send Reset Token</button>
+    </form>
+
+    <form id="adminPasswordResetConfirmForm" style="display:none; margin-top:12px;">
+        <div class="admin-field">
+            <label for="adminResetToken">Reset Token</label>
+            <input type="text" id="adminResetToken" placeholder="Paste reset token">
+        </div>
+        <div class="admin-field">
+            <label for="adminResetNewPassword">New Password</label>
+            <input type="password" id="adminResetNewPassword" autocomplete="new-password" placeholder="Enter new password">
+        </div>
+        <button class="admin-secondary-btn" type="submit" id="adminResetConfirmSubmit" style="width:100%; margin-top:10px;">Reset Password</button>
+    </form>
+
     <div class="status" id="adminLoginStatus"></div>
 
     <div class="admin-links-row">

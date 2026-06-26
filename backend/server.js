@@ -35,6 +35,9 @@ const ENGAGEMENT_FILE = path.join(DATA_DIR, 'engagement.json');
 const STATS_FILE = path.join(DATA_DIR, 'app-stats.json');
 const BLOCKED_TERMS = ['spam', 'scam', 'fraud', 'casino', 'betting', 'porn'];
 const rateLimitStore = new Map();
+const passwordResetStore = new Map();
+const PASSWORD_RESET_TOKEN_TTL_MINUTES = Math.max(Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30), 5);
+const PASSWORD_RESET_TOKEN_TTL_MS = PASSWORD_RESET_TOKEN_TTL_MINUTES * 60 * 1000;
 let mongoReady = false;
 let NewsModel = null;
 let UserModel = null;
@@ -44,9 +47,16 @@ let mongoMemoryServer = null;
 // Prevent unbounded memory growth in in-memory rate-limit buckets.
 setInterval(() => {
     const now = Date.now();
+
     for (const [key, value] of rateLimitStore.entries()) {
         if (!value || value.expiresAt <= now) {
             rateLimitStore.delete(key);
+        }
+    }
+
+    for (const [key, value] of passwordResetStore.entries()) {
+        if (!value || value.expiresAt <= now) {
+            passwordResetStore.delete(key);
         }
     }
 }, 5 * 60 * 1000).unref();
@@ -183,6 +193,39 @@ function createAuthToken(user) {
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
     );
+}
+
+function buildPasswordResetTokenHash(token) {
+    return crypto.createHash('sha256').update(String(token || '')).digest('hex');
+}
+
+function issuePasswordResetToken(email) {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = buildPasswordResetTokenHash(rawToken);
+
+    passwordResetStore.set(tokenHash, {
+        email: String(email || '').toLowerCase(),
+        expiresAt: Date.now() + PASSWORD_RESET_TOKEN_TTL_MS
+    });
+
+    return rawToken;
+}
+
+function consumePasswordResetToken(rawToken) {
+    const tokenHash = buildPasswordResetTokenHash(rawToken);
+    const entry = passwordResetStore.get(tokenHash);
+
+    if (!entry) {
+        return null;
+    }
+
+    if (entry.expiresAt <= Date.now()) {
+        passwordResetStore.delete(tokenHash);
+        return null;
+    }
+
+    passwordResetStore.delete(tokenHash);
+    return entry;
 }
 
 function requireJwtAuth(req, res, next) {
@@ -1234,6 +1277,112 @@ app.post('/api/auth/login', createRateLimiter(60 * 1000, 12), requireMongo, asyn
                 token,
                 user: mapUser(user)
             }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/auth/password-reset/request', createRateLimiter(10 * 60 * 1000, 6), requireMongo, async (req, res, next) => {
+    try {
+        const email = validator.trim(String(req.body.email || '')).toLowerCase();
+
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email address'
+            });
+        }
+
+        const user = await UserModel.findOne({ email, isActive: true });
+        let token = '';
+        let resetUrl = '';
+
+        if (user) {
+            token = issuePasswordResetToken(email);
+            resetUrl = String(process.env.ADMIN_RESET_URL || `${req.protocol}://${req.get('host')}/admin/login.html#reset-token=${token}`);
+
+            if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+                const mailOptions = {
+                    from: process.env.EMAIL_USER,
+                    to: email,
+                    subject: 'M62 WEB TV Admin Password Reset',
+                    html: `
+                        <h2>Password Reset Request</h2>
+                        <p>Someone requested to reset your M62 WEB TV admin password.</p>
+                        <p>This token expires in ${PASSWORD_RESET_TOKEN_TTL_MINUTES} minutes.</p>
+                        <p><strong>Reset token:</strong> ${token}</p>
+                        <p><strong>Reset link:</strong> <a href="${resetUrl}">${resetUrl}</a></p>
+                        <p>If you did not request this, you can ignore this message.</p>
+                    `
+                };
+
+                transporter.sendMail(mailOptions).catch((mailError) => {
+                    console.warn('Password reset mail failed:', mailError.message);
+                });
+            }
+        }
+
+        const responsePayload = {
+            success: true,
+            message: 'If that email exists, password reset instructions have been issued.'
+        };
+
+        if (!IS_PRODUCTION && token) {
+            responsePayload.data = {
+                token,
+                resetUrl,
+                expiresInMinutes: PASSWORD_RESET_TOKEN_TTL_MINUTES
+            };
+        }
+
+        res.json(responsePayload);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/auth/password-reset/confirm', createRateLimiter(10 * 60 * 1000, 12), requireMongo, async (req, res, next) => {
+    try {
+        const token = validator.trim(String(req.body.token || ''));
+        const password = String(req.body.password || '');
+
+        if (!token || token.length < 20) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid reset token'
+            });
+        }
+
+        if (password.length < 8 || password.length > 128) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be between 8 and 128 characters'
+            });
+        }
+
+        const tokenEntry = consumePasswordResetToken(token);
+        if (!tokenEntry || !tokenEntry.email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Reset token is invalid or expired'
+            });
+        }
+
+        const user = await UserModel.findOne({ email: tokenEntry.email, isActive: true });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found or inactive'
+            });
+        }
+
+        user.passwordHash = await bcrypt.hash(password, 12);
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Password reset successful. You can now sign in.'
         });
     } catch (error) {
         next(error);

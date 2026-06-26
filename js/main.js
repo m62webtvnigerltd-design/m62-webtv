@@ -1885,6 +1885,42 @@ async function loginAdmin(email, password) {
     return payload.data || {};
 }
 
+async function requestAdminPasswordReset(email) {
+    const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/request`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email })
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok || !payload?.success) {
+        throw new Error(payload.message || "Unable to request password reset");
+    }
+
+    return payload;
+}
+
+async function confirmAdminPasswordReset(token, password) {
+    const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/confirm`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ token, password })
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok || !payload?.success) {
+        throw new Error(payload.message || "Unable to reset password");
+    }
+
+    return payload;
+}
+
 async function synchronizeAdminSession() {
     const token = getAdminAuthToken();
 
@@ -2386,9 +2422,26 @@ function initializeAdminLoginPage() {
     const passwordInput = document.getElementById("adminLoginPassword");
     const submitButton = document.getElementById("adminLoginSubmit");
     const statusNode = document.getElementById("adminLoginStatus");
+    const openResetRequestLink = document.getElementById("openPasswordResetRequest");
+    const openResetConfirmLink = document.getElementById("openPasswordResetConfirm");
+    const resetRequestForm = document.getElementById("adminPasswordResetRequestForm");
+    const resetConfirmForm = document.getElementById("adminPasswordResetConfirmForm");
+    const resetEmailInput = document.getElementById("adminResetEmail");
+    const resetTokenInput = document.getElementById("adminResetToken");
+    const resetNewPasswordInput = document.getElementById("adminResetNewPassword");
+    const resetRequestSubmit = document.getElementById("adminResetRequestSubmit");
+    const resetConfirmSubmit = document.getElementById("adminResetConfirmSubmit");
 
     if (!form || !emailInput || !passwordInput || !submitButton || !statusNode) {
         return;
+    }
+
+    const hashTokenMatch = String(window.location.hash || "").match(/reset-token=([^&]+)/i);
+    if (hashTokenMatch && resetTokenInput) {
+        resetTokenInput.value = decodeURIComponent(hashTokenMatch[1]);
+        if (resetConfirmForm) {
+            resetConfirmForm.style.display = "block";
+        }
     }
 
     const loginMessage = sessionStorage.getItem("m62AdminLoginMessage");
@@ -2434,6 +2487,79 @@ function initializeAdminLoginPage() {
             submitButton.disabled = false;
         }
     });
+
+    if (openResetRequestLink && resetRequestForm) {
+        openResetRequestLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            resetRequestForm.style.display = resetRequestForm.style.display === "none" ? "block" : "none";
+        });
+    }
+
+    if (openResetConfirmLink && resetConfirmForm) {
+        openResetConfirmLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            resetConfirmForm.style.display = resetConfirmForm.style.display === "none" ? "block" : "none";
+        });
+    }
+
+    if (resetRequestForm && resetEmailInput && resetRequestSubmit) {
+        resetRequestForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const email = String(resetEmailInput.value || "").trim().toLowerCase();
+
+            if (!email) {
+                statusNode.textContent = "Enter your email for reset request.";
+                statusNode.className = "status error";
+                return;
+            }
+
+            resetRequestSubmit.disabled = true;
+            statusNode.textContent = "Submitting reset request...";
+            statusNode.className = "status";
+
+            try {
+                const payload = await requestAdminPasswordReset(email);
+                const devToken = payload?.data?.token ? ` Token: ${payload.data.token}` : "";
+                statusNode.textContent = `${payload.message || "Reset request submitted."}${devToken}`;
+                statusNode.className = "status success";
+            } catch (error) {
+                statusNode.textContent = error.message || "Reset request failed.";
+                statusNode.className = "status error";
+            } finally {
+                resetRequestSubmit.disabled = false;
+            }
+        });
+    }
+
+    if (resetConfirmForm && resetTokenInput && resetNewPasswordInput && resetConfirmSubmit) {
+        resetConfirmForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const token = String(resetTokenInput.value || "").trim();
+            const newPassword = String(resetNewPasswordInput.value || "");
+
+            if (!token || !newPassword) {
+                statusNode.textContent = "Token and new password are required.";
+                statusNode.className = "status error";
+                return;
+            }
+
+            resetConfirmSubmit.disabled = true;
+            statusNode.textContent = "Resetting password...";
+            statusNode.className = "status";
+
+            try {
+                const payload = await confirmAdminPasswordReset(token, newPassword);
+                statusNode.textContent = payload.message || "Password reset successful.";
+                statusNode.className = "status success";
+                resetNewPasswordInput.value = "";
+            } catch (error) {
+                statusNode.textContent = error.message || "Password reset failed.";
+                statusNode.className = "status error";
+            } finally {
+                resetConfirmSubmit.disabled = false;
+            }
+        });
+    }
 }
 
 function initializeNewsManagementPage() {
