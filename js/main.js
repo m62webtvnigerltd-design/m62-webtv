@@ -197,6 +197,35 @@ function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
+function isAdminPage() {
+    if (typeof window === "undefined") {
+        return false;
+    }
+
+    return String(window.location.pathname || "").toLowerCase().includes("/admin/");
+}
+
+function redirectToAdminLogin(reason = "") {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    const currentPath = String(window.location.pathname || "").toLowerCase();
+    const loginPath = currentPath.includes("/admin/")
+        ? currentPath.replace(/[^/]+$/, "login.html")
+        : "admin/login.html";
+
+    if (currentPath.endsWith("/login.html") || currentPath.endsWith("\\login.html") || currentPath.endsWith("login.html")) {
+        return;
+    }
+
+    if (reason) {
+        sessionStorage.setItem("m62AdminLoginMessage", reason);
+    }
+
+    window.location.href = loginPath;
+}
+
 function setEngagementFeedback(form, message, tone) {
     const feedback = form.querySelector(".engagement-feedback");
 
@@ -225,6 +254,12 @@ async function parseApiError(response, fallbackMessage) {
     const retryAfterHeader = Number(response.headers.get("Retry-After") || 0);
     const retryAfterSeconds = Number(payload.retryAfterSeconds || retryAfterHeader || 0);
     const message = payload.message || fallbackMessage;
+
+    if (isAdminPage() && (response.status === 401 || response.status === 403) && !String(window.location.pathname || "").toLowerCase().endsWith("login.html")) {
+        clearAdminAuthSession();
+        redirectToAdminLogin("Your admin session expired. Please sign in again.");
+    }
+
     return new ApiError(message, response.status, retryAfterSeconds);
 }
 
@@ -1551,6 +1586,13 @@ function initializeAdminLoginPage() {
         return;
     }
 
+    const loginMessage = sessionStorage.getItem("m62AdminLoginMessage");
+    if (loginMessage) {
+        statusNode.textContent = loginMessage;
+        statusNode.className = "status error";
+        sessionStorage.removeItem("m62AdminLoginMessage");
+    }
+
     synchronizeAdminSession().then((existingUser) => {
         if (existingUser && existingUser.email) {
             statusNode.textContent = `Already logged in as ${existingUser.email}`;
@@ -1561,7 +1603,7 @@ function initializeAdminLoginPage() {
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const email = String(emailInput.value || "").trim().toLowerCase();
-        const password = String(passwordInput.value || "");
+                redirectToAdminLogin("You have been logged out.");
 
         if (!email || !password) {
             statusNode.textContent = "Email and password are required.";

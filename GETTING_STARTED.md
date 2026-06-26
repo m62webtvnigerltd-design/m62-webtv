@@ -63,7 +63,7 @@ PORT=3000
 **5. Start MongoDB service and backend:**
 ```powershell
 cd "C:\Users\DELL\Desktop\M62 WEB TV"
-.\start-project.ps1
+start-project.cmd
 ```
 
 Manual option:
@@ -86,6 +86,13 @@ You should see:
 - Page: `admin\login.html`
 - Email: `m62webtvnigerltd@gmail.com`
 - Password: use your current admin password
+
+### Useful Local Commands
+```powershell
+cd "C:\Users\DELL\Desktop\M62 WEB TV"
+status-project.cmd
+stop-project.cmd
+```
 
 ---
 
@@ -234,7 +241,7 @@ Start-Service MongoDB
 **Solution:**
 ```powershell
 cd "C:\Users\DELL\Desktop\M62 WEB TV"
-.\start-project.ps1
+start-project.cmd
 ```
 
 ### Contact form not sending email

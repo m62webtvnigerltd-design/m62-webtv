@@ -72,7 +72,13 @@ npm start
 Or from the project root:
 ```powershell
 cd "C:\Users\DELL\Desktop\M62 WEB TV"
-.\start-project.ps1
+start-project.cmd
+```
+
+Check status or stop the local stack from the project root:
+```powershell
+status-project.cmd
+stop-project.cmd
 ```
 
 ### Development (with auto-reload)
