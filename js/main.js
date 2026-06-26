@@ -1184,6 +1184,7 @@ function renderEngagementWidget(itemType, itemId) {
 
 async function renderHomeNews() {
     const container = document.getElementById("homeNews");
+    const defaultCover = "assets/images/banner.png";
 
     if (!container) {
         return;
@@ -1199,10 +1200,37 @@ async function renderHomeNews() {
 
     container.innerHTML = news.map((item, index) => `
 <article class="news-card">
+    <img class="news-cover" loading="lazy" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
     <h3>${escapeHtml(item.title)}</h3>
     <p><strong>Date:</strong> ${escapeHtml(formatNewsDate(item.publishedAt || item.createdAt))}</p>
     <p>${escapeHtml(item.summary || item.content || "")}</p>
     ${renderEngagementWidget("news", item.id || `news_${index + 1}`)}
+</article>
+`).join("");
+}
+
+async function renderFeaturedNews() {
+    const container = document.getElementById("featuredNews");
+    const defaultCover = "assets/images/banner.png";
+
+    if (!container) {
+        return;
+    }
+
+    const result = await fetchNewsList({ status: "published", pageSize: 8 });
+    const news = (result.data || []).slice(0, 4);
+
+    if (!news.length) {
+        container.innerHTML = "<p>No featured news available yet.</p>";
+        return;
+    }
+
+    container.innerHTML = news.map((item, index) => `
+<article class="featured-card">
+    <span class="featured-badge">${index === 0 ? "TOP STORY" : "FEATURED"}</span>
+    <img class="featured-cover" loading="lazy" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
+    <h3>${escapeHtml(item.title)}</h3>
+    <p>${escapeHtml(item.summary || item.content || "")}</p>
 </article>
 `).join("");
 }
@@ -1224,12 +1252,54 @@ async function renderHomeVideos() {
 
     container.innerHTML = videos.map((video, index) => `
 <article class="video-card">
+    ${video.thumbnailUrl ? `<img class="news-cover" loading="lazy" src="${escapeHtml(video.thumbnailUrl)}" alt="${escapeHtml(video.title)}">` : ""}
     <h3>${escapeHtml(video.title)}</h3>
     <p>${escapeHtml(video.description || "")}</p>
     ${video.videoUrl && video.videoUrl.includes('/uploads/')
         ? `<video controls style="width:100%;max-height:240px;" src="${escapeHtml(video.videoUrl)}"></video>`
         : `<p><a href="${escapeHtml(video.videoUrl)}" target="_blank" rel="noopener noreferrer">Watch video</a></p>`}
     ${renderEngagementWidget("video", video.id || `video_${index + 1}`)}
+</article>
+`).join("");
+}
+
+async function renderHomeGallery() {
+    const container = document.getElementById("homeGallery");
+
+    if (!container) {
+        return;
+    }
+
+    const [newsResult, videoResult] = await Promise.all([
+        fetchNewsList({ status: "published", pageSize: 10 }),
+        fetchVideosList({ status: "published", pageSize: 10 })
+    ]);
+
+    const newsImages = (newsResult.data || [])
+        .filter((item) => String(item.coverImageUrl || "").trim())
+        .map((item) => ({
+            url: item.coverImageUrl,
+            caption: item.title || "News image"
+        }));
+
+    const videoImages = (videoResult.data || [])
+        .filter((item) => String(item.thumbnailUrl || "").trim())
+        .map((item) => ({
+            url: item.thumbnailUrl,
+            caption: item.title || "Video thumbnail"
+        }));
+
+    const items = [...newsImages, ...videoImages].slice(0, 12);
+
+    if (!items.length) {
+        container.innerHTML = "<p>No gallery images available yet. Add cover images/thumbnails from admin pages.</p>";
+        return;
+    }
+
+    container.innerHTML = items.map((item) => `
+<article class="gallery-card">
+    <img class="gallery-photo" loading="lazy" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption)}">
+    <p>${escapeHtml(item.caption)}</p>
 </article>
 `).join("");
 }
@@ -2433,8 +2503,12 @@ function bindEngagementForms() {
 
 async function initializeHomePage() {
     ensureContentIds();
-    await renderHomeNews();
-    await renderHomeVideos();
+    await Promise.all([
+        renderHomeNews(),
+        renderFeaturedNews(),
+        renderHomeVideos(),
+        renderHomeGallery()
+    ]);
     await refreshEngagementWidgets();
 }
 
