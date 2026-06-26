@@ -2907,6 +2907,8 @@ function initializeSettingsPage() {
 
     const feedback = document.getElementById("settingsFeedback");
     const savedAtBadge = document.getElementById("settingsSavedAt");
+    const accessHint = document.getElementById("settingsAccessHint");
+    let canManageSettings = true;
 
     const applySettingsToForm = (settings) => {
         inputIds.forEach((id) => {
@@ -2951,9 +2953,56 @@ function initializeSettingsPage() {
         return next;
     };
 
+    const setSettingsEditability = (enabled) => {
+        [...inputIds, ...checkboxIds].forEach((id) => {
+            const node = document.getElementById(id);
+            if (!node) {
+                return;
+            }
+
+            if ("disabled" in node) {
+                node.disabled = !enabled;
+            }
+        });
+
+        saveButton.disabled = !enabled;
+        resetButton.disabled = !enabled;
+    };
+
     applySettingsToForm(readPlatformSettings());
 
+    synchronizeAdminSession().then((user) => {
+        const role = String(user?.role || "").toLowerCase();
+        canManageSettings = role === "admin";
+        setSettingsEditability(canManageSettings);
+
+        if (accessHint) {
+            if (canManageSettings) {
+                accessHint.textContent = "Access level: Admin. You can edit and save platform settings.";
+                accessHint.className = "admin-muted";
+            } else {
+                accessHint.textContent = "Access level: read-only. Only admin role can modify settings.";
+                accessHint.className = "admin-lock-note";
+            }
+        }
+    }).catch(() => {
+        canManageSettings = false;
+        setSettingsEditability(false);
+
+        if (accessHint) {
+            accessHint.textContent = "Unable to verify access. Settings are locked.";
+            accessHint.className = "admin-lock-note";
+        }
+    });
+
     saveButton.addEventListener("click", () => {
+        if (!canManageSettings) {
+            if (feedback) {
+                feedback.textContent = "Only admin users can save settings.";
+            }
+            return;
+        }
+
         const nextSettings = collectFormSettings();
         writePlatformSettings(nextSettings);
         applySettingsToForm(nextSettings);
@@ -2964,6 +3013,13 @@ function initializeSettingsPage() {
     });
 
     resetButton.addEventListener("click", () => {
+        if (!canManageSettings) {
+            if (feedback) {
+                feedback.textContent = "Only admin users can reset settings.";
+            }
+            return;
+        }
+
         const defaults = getDefaultPlatformSettings();
         writePlatformSettings(defaults);
         applySettingsToForm(defaults);
@@ -2999,9 +3055,92 @@ function initializeStatisticsPage() {
     const insightsList = document.getElementById("statsInsightsList");
     const generatedAt = document.getElementById("statsGeneratedAt");
     const apiStatus = document.getElementById("statsApiStatus");
+    const mixBarsContainer = document.getElementById("statsMixBars");
+    const latestContentBody = document.getElementById("statsTopContentBody");
+    const publishingProgress = document.getElementById("statProgressPublishing");
+    const engagementProgress = document.getElementById("statProgressEngagement");
+    const communityProgress = document.getElementById("statProgressCommunity");
+    const publishingProgressText = document.getElementById("statProgressPublishingText");
+    const engagementProgressText = document.getElementById("statProgressEngagementText");
+    const communityProgressText = document.getElementById("statProgressCommunityText");
+
+    const setProgress = (barNode, textNode, percentValue) => {
+        const percent = Math.max(0, Math.min(100, Number(percentValue || 0)));
+
+        if (barNode) {
+            barNode.style.width = `${percent}%`;
+        }
+
+        if (textNode) {
+            textNode.textContent = `${percent}%`;
+        }
+    };
+
+    const renderMixBars = (items) => {
+        if (!mixBarsContainer) {
+            return;
+        }
+
+        const maxValue = Math.max(1, ...items.map((item) => Number(item.value || 0)));
+        mixBarsContainer.innerHTML = items.map((item) => {
+            const percent = Math.max(0, Math.min(100, Math.round((Number(item.value || 0) / maxValue) * 100)));
+            return `
+<div class="admin-mix-row">
+    <span class="admin-mix-label">${escapeHtml(item.label)}</span>
+    <div class="admin-mix-track"><div class="admin-mix-fill" style="width:${percent}%"></div></div>
+    <span class="admin-mix-value">${escapeHtml(String(item.value || 0))}</span>
+</div>`;
+        }).join("");
+    };
+
+    const renderLatestContentTable = (newsItems, videoItems) => {
+        if (!latestContentBody) {
+            return;
+        }
+
+        const mappedNews = (newsItems || []).map((item) => ({
+            type: "News",
+            title: item.title || "Untitled",
+            category: item.category || "General",
+            status: item.status || "published",
+            publishedAt: item.publishedAt || item.createdAt || ""
+        }));
+
+        const mappedVideos = (videoItems || []).map((item) => ({
+            type: "Video",
+            title: item.title || "Untitled",
+            category: item.category || "General",
+            status: item.status || "published",
+            publishedAt: item.publishedAt || item.createdAt || ""
+        }));
+
+        const items = [...mappedNews, ...mappedVideos]
+            .sort((a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime())
+            .slice(0, 8);
+
+        if (!items.length) {
+            latestContentBody.innerHTML = "<tr><td colspan=\"5\">No content activity yet.</td></tr>";
+            return;
+        }
+
+        latestContentBody.innerHTML = items.map((item) => `
+<tr>
+    <td>${escapeHtml(item.type)}</td>
+    <td>${escapeHtml(item.title)}</td>
+    <td>${escapeHtml(item.category)}</td>
+    <td>${escapeHtml(item.status)}</td>
+    <td>${escapeHtml(formatNewsDate(item.publishedAt))}</td>
+</tr>`).join("");
+    };
 
     const renderStatistics = async () => {
         const stats = await fetchDashboardStats();
+        const [newsResult, videosResult] = await Promise.all([
+            fetchNewsList({ status: "all", pageSize: 20 }),
+            fetchVideosList({ status: "all", pageSize: 20 })
+        ]);
+        const newsItems = newsResult.data || [];
+        const videoItems = videosResult.data || [];
 
         Object.entries(statNodes).forEach(([key, node]) => {
             if (node) {
@@ -3019,7 +3158,7 @@ function initializeStatisticsPage() {
             : "0.0";
 
         if (summaryLine) {
-            summaryLine.textContent = `You have ${totalContent} published content items with ~${engagementRate}% engagement per item.`;
+            summaryLine.textContent = `You have ${totalContent} content items with ~${engagementRate}% engagement per item and ${stats.visitorsCount || 0} visitors tracked.`;
         }
 
         if (insightsList) {
@@ -3027,11 +3166,30 @@ function initializeStatisticsPage() {
                 `${stats.newsCount || 0} news entries are currently visible in the pipeline.`,
                 `${stats.videosCount || 0} videos are available for homepage and archive feeds.`,
                 `${stats.commentsCount || 0} comments indicate community interaction depth.`,
-                `${stats.usersCount || 0} team members currently have system access.`
+                `${stats.usersCount || 0} team members currently have system access.`,
+                `${newsItems.length + videoItems.length} recent content items were sampled for activity view.`
             ];
 
             insightsList.innerHTML = insights.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
         }
+
+        renderMixBars([
+            { label: "News", value: Number(stats.newsCount || 0) },
+            { label: "Videos", value: Number(stats.videosCount || 0) },
+            { label: "Comments", value: Number(stats.commentsCount || 0) },
+            { label: "Visitors", value: Number(stats.visitorsCount || 0) },
+            { label: "Engagement", value: Number(stats.engagementCount || 0) }
+        ]);
+
+        const publishingGoal = Math.round((Math.min(100, ((Number(stats.newsCount || 0) + Number(stats.videosCount || 0)) / 40) * 100)));
+        const engagementGoal = Math.round((Math.min(100, ((Number(stats.engagementCount || 0)) / 200) * 100)));
+        const communityGoal = Math.round((Math.min(100, ((Number(stats.commentsCount || 0)) / 120) * 100)));
+
+        setProgress(publishingProgress, publishingProgressText, publishingGoal);
+        setProgress(engagementProgress, engagementProgressText, engagementGoal);
+        setProgress(communityProgress, communityProgressText, communityGoal);
+
+        renderLatestContentTable(newsItems, videoItems);
 
         if (apiStatus) {
             const apiLikelyOnline = Number(stats.usersCount || 0) > 0 || Number(stats.commentsCount || 0) > 0;

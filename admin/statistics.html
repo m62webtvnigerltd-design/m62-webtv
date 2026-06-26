@@ -88,6 +88,61 @@
                 <div class="admin-hero-note">Use this page before daily editorial standup to align priorities.</div>
             </article>
         </section>
+
+        <section class="admin-grid admin-split">
+            <article class="admin-card admin-stack">
+                <h3>Channel Mix</h3>
+                <p class="admin-muted">Relative volume across core platform signals.</p>
+                <div id="statsMixBars" class="admin-mix-bars"></div>
+            </article>
+
+            <article class="admin-card admin-stack">
+                <h3>Target Progress</h3>
+                <div class="admin-progress-item">
+                    <div class="admin-progress-head">
+                        <strong>Publishing Goal</strong>
+                        <span id="statProgressPublishingText">0%</span>
+                    </div>
+                    <div class="admin-progress-track"><div id="statProgressPublishing" class="admin-progress-fill"></div></div>
+                </div>
+                <div class="admin-progress-item">
+                    <div class="admin-progress-head">
+                        <strong>Engagement Goal</strong>
+                        <span id="statProgressEngagementText">0%</span>
+                    </div>
+                    <div class="admin-progress-track"><div id="statProgressEngagement" class="admin-progress-fill"></div></div>
+                </div>
+                <div class="admin-progress-item">
+                    <div class="admin-progress-head">
+                        <strong>Community Goal</strong>
+                        <span id="statProgressCommunityText">0%</span>
+                    </div>
+                    <div class="admin-progress-track"><div id="statProgressCommunity" class="admin-progress-fill"></div></div>
+                </div>
+            </article>
+        </section>
+
+        <section class="admin-grid">
+            <article class="admin-card">
+                <h3>Latest Content Activity</h3>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Published</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsTopContentBody">
+                            <tr><td colspan="5">Loading latest content...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
     </main>
 </div>
 <script src="../js/main.js"></script>
