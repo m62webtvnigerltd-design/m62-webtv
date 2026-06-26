@@ -53,6 +53,20 @@ h1{
     gap:12px;
 }
 
+.news-list-controls{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.news-list-controls input,
+.news-list-controls select{
+    width:auto;
+    min-width:170px;
+    margin-top:0;
+}
+
 .news-list table{
     width:100%;
     border-collapse:collapse;
@@ -205,7 +219,15 @@ button:hover{
 <div class="news-list">
     <div class="news-list-header">
         <h2>Latest News Items</h2>
-        <button type="button" id="refreshNewsList">Refresh</button>
+        <div class="news-list-controls">
+            <input type="text" id="adminNewsSearch" placeholder="Search title/category...">
+            <select id="adminNewsStatusFilter">
+                <option value="all">All Statuses</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+            </select>
+            <button type="button" id="refreshNewsList">Refresh</button>
+        </div>
     </div>
     <table>
         <thead>

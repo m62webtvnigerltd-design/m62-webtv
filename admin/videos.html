@@ -114,6 +114,21 @@ td{
     color:#c0392b;
     font-weight:bold;
 }
+
+.videos-list-controls{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+}
+
+.videos-list-controls input,
+.videos-list-controls select{
+    width:auto;
+    min-width:170px;
+    margin-top:0;
+}
 </style>
 </head>
 
@@ -175,7 +190,15 @@ td{
 
 <h2>Published Videos</h2>
 
-<button type="button" id="refreshVideosList">Refresh Videos</button>
+<div class="videos-list-controls">
+    <input type="text" id="adminVideoSearch" placeholder="Search title/category/source...">
+    <select id="adminVideoStatusFilter">
+        <option value="all">All Statuses</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+    </select>
+    <button type="button" id="refreshVideosList">Refresh Videos</button>
+</div>
 
 <table>
 <thead>

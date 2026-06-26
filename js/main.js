@@ -553,6 +553,45 @@ function renderAdminNewsRows(items) {
 `).join("");
 }
 
+function getAdminNewsFilteredItems() {
+    const searchInput = document.getElementById("adminNewsSearch");
+    const statusFilter = document.getElementById("adminNewsStatusFilter");
+    const query = String(searchInput?.value || "").trim().toLowerCase();
+    const status = String(statusFilter?.value || "all").trim().toLowerCase();
+
+    return adminEditorState.newsItems.filter((item) => {
+        const itemStatus = String(item.status || "published").toLowerCase();
+        const matchesStatus = status === "all" || itemStatus === status;
+
+        if (!matchesStatus) {
+            return false;
+        }
+
+        if (!query) {
+            return true;
+        }
+
+        const haystack = [
+            String(item.title || ""),
+            String(item.category || ""),
+            String(item.summary || "")
+        ].join(" ").toLowerCase();
+
+        return haystack.includes(query);
+    });
+}
+
+function renderAdminNewsTableFromState() {
+    const tableBody = document.getElementById("adminNewsTableBody");
+
+    if (!tableBody) {
+        return;
+    }
+
+    const filteredItems = getAdminNewsFilteredItems();
+    tableBody.innerHTML = renderAdminNewsRows(filteredItems);
+}
+
 async function loadAdminNewsTable() {
     const tableBody = document.getElementById("adminNewsTableBody");
 
@@ -564,7 +603,7 @@ async function loadAdminNewsTable() {
 
     const result = await fetchNewsList({ status: "all", pageSize: 100 });
     adminEditorState.newsItems = result.data || [];
-    tableBody.innerHTML = renderAdminNewsRows(adminEditorState.newsItems);
+    renderAdminNewsTableFromState();
 }
 
 function normalizeLegacyVideoItem(item, index) {
@@ -893,23 +932,71 @@ async function loadVideos() {
         return;
     }
 
-    table.innerHTML = "";
     adminEditorState.videoItems = videos;
+    renderAdminVideosTableFromState();
+}
 
-    videos.forEach((video) => {
-        table.innerHTML += `
-        <tr>
-            <td>${escapeHtml(video.title)}</td>
-            <td>${escapeHtml(video.category || "General")}</td>
-            <td>${escapeHtml(video.status || "published")}</td>
-            <td>${escapeHtml(video.sourceType || "external")}</td>
-            <td>
-                <button type="button" data-video-edit-id="${escapeHtml(video.id)}">Edit</button>
-                <button type="button" data-video-delete-id="${escapeHtml(video.id)}">Delete</button>
-            </td>
-        </tr>
-        `;
+function renderAdminVideoRows(items) {
+    if (!items.length) {
+        return `
+<tr>
+    <td colspan="5">No videos found.</td>
+</tr>
+`;
+    }
+
+    return items.map((video) => `
+<tr>
+    <td>${escapeHtml(video.title)}</td>
+    <td>${escapeHtml(video.category || "General")}</td>
+    <td>${escapeHtml(video.status || "published")}</td>
+    <td>${escapeHtml(video.sourceType || "external")}</td>
+    <td>
+        <button type="button" data-video-edit-id="${escapeHtml(video.id)}">Edit</button>
+        <button type="button" data-video-delete-id="${escapeHtml(video.id)}">Delete</button>
+    </td>
+</tr>
+`).join("");
+}
+
+function getAdminVideosFilteredItems() {
+    const searchInput = document.getElementById("adminVideoSearch");
+    const statusFilter = document.getElementById("adminVideoStatusFilter");
+    const query = String(searchInput?.value || "").trim().toLowerCase();
+    const status = String(statusFilter?.value || "all").trim().toLowerCase();
+
+    return adminEditorState.videoItems.filter((video) => {
+        const itemStatus = String(video.status || "published").toLowerCase();
+        const matchesStatus = status === "all" || itemStatus === status;
+
+        if (!matchesStatus) {
+            return false;
+        }
+
+        if (!query) {
+            return true;
+        }
+
+        const haystack = [
+            String(video.title || ""),
+            String(video.category || ""),
+            String(video.sourceType || ""),
+            String(video.description || "")
+        ].join(" ").toLowerCase();
+
+        return haystack.includes(query);
     });
+}
+
+function renderAdminVideosTableFromState() {
+    const table = document.getElementById("videoTable");
+
+    if (!table) {
+        return;
+    }
+
+    const filteredVideos = getAdminVideosFilteredItems();
+    table.innerHTML = renderAdminVideoRows(filteredVideos);
 }
 
 function saveLiveTV() {
@@ -1807,6 +1894,8 @@ function initializeAdminLoginPage() {
 function initializeNewsManagementPage() {
     const refreshButton = document.getElementById("refreshNewsList");
     const newsTableBody = document.getElementById("adminNewsTableBody");
+    const searchInput = document.getElementById("adminNewsSearch");
+    const statusFilter = document.getElementById("adminNewsStatusFilter");
     const uploadButton = document.getElementById("uploadNewsImage");
     const fileInput = document.getElementById("newsImageFile");
     const imageUrlInput = document.getElementById("newsCoverImage");
@@ -1825,6 +1914,18 @@ function initializeNewsManagementPage() {
     if (refreshButton) {
         refreshButton.addEventListener("click", () => {
             loadAdminNewsTable();
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            renderAdminNewsTableFromState();
+        });
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener("change", () => {
+            renderAdminNewsTableFromState();
         });
     }
 
@@ -1899,6 +2000,8 @@ function initializeNewsManagementPage() {
 function initializeVideosManagementPage() {
     const refreshButton = document.getElementById("refreshVideosList");
     const tableBody = document.getElementById("videoTable");
+    const searchInput = document.getElementById("adminVideoSearch");
+    const statusFilter = document.getElementById("adminVideoStatusFilter");
     const uploadVideoButton = document.getElementById("uploadVideoFile");
     const videoFileInput = document.getElementById("videoFile");
     const videoUrlInput = document.getElementById("videoLink");
@@ -1921,6 +2024,18 @@ function initializeVideosManagementPage() {
     if (refreshButton) {
         refreshButton.addEventListener("click", () => {
             loadVideos();
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            renderAdminVideosTableFromState();
+        });
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener("change", () => {
+            renderAdminVideosTableFromState();
         });
     }
 
