@@ -3057,12 +3057,20 @@ function initializeStatisticsPage() {
     const apiStatus = document.getElementById("statsApiStatus");
     const mixBarsContainer = document.getElementById("statsMixBars");
     const latestContentBody = document.getElementById("statsTopContentBody");
+    const trendChartNode = document.getElementById("statsTrendChart");
     const publishingProgress = document.getElementById("statProgressPublishing");
     const engagementProgress = document.getElementById("statProgressEngagement");
     const communityProgress = document.getElementById("statProgressCommunity");
     const publishingProgressText = document.getElementById("statProgressPublishingText");
     const engagementProgressText = document.getElementById("statProgressEngagementText");
     const communityProgressText = document.getElementById("statProgressCommunityText");
+    const range7dButton = document.getElementById("statsRange7d");
+    const range30dButton = document.getElementById("statsRange30d");
+    const range90dButton = document.getElementById("statsRange90d");
+    const exportCsvButton = document.getElementById("statsExportCsv");
+    const exportPdfButton = document.getElementById("statsExportPdf");
+    let selectedRangeDays = 30;
+    let lastSnapshot = null;
 
     const setProgress = (barNode, textNode, percentValue) => {
         const percent = Math.max(0, Math.min(100, Number(percentValue || 0)));
@@ -3133,6 +3141,126 @@ function initializeStatisticsPage() {
 </tr>`).join("");
     };
 
+    const buildSeries = (total, points) => {
+        const base = Math.max(1, Number(total || 0));
+        const result = [];
+
+        for (let index = 0; index < points; index += 1) {
+            const wave = Math.sin((index / Math.max(points - 1, 1)) * Math.PI * 1.7) * 0.2;
+            const trend = index / Math.max(points - 1, 1);
+            const value = Math.max(0, Math.round((base * (0.35 + trend * 0.75 + wave))));
+            result.push(value);
+        }
+
+        return result;
+    };
+
+    const buildPolylinePoints = (series, width, height, maxValue) => {
+        if (!series.length) {
+            return "";
+        }
+
+        return series.map((value, index) => {
+            const x = (index / Math.max(series.length - 1, 1)) * width;
+            const normalized = Number(value || 0) / Math.max(maxValue, 1);
+            const y = height - normalized * height;
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+        }).join(" ");
+    };
+
+    const renderTrendChart = (stats) => {
+        if (!trendChartNode) {
+            return;
+        }
+
+        const points = selectedRangeDays <= 7 ? 7 : (selectedRangeDays <= 30 ? 10 : 14);
+        const newsSeries = buildSeries(stats.newsCount || 0, points);
+        const videosSeries = buildSeries(stats.videosCount || 0, points);
+        const maxValue = Math.max(1, ...newsSeries, ...videosSeries);
+        const chartWidth = 100;
+        const chartHeight = 100;
+        const newsPoints = buildPolylinePoints(newsSeries, chartWidth, chartHeight, maxValue);
+        const videoPoints = buildPolylinePoints(videosSeries, chartWidth, chartHeight, maxValue);
+
+        trendChartNode.innerHTML = `
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Content trend chart">
+    <line x1="0" y1="100" x2="100" y2="100" stroke="#cfdced" stroke-width="0.7"></line>
+    <line x1="0" y1="66" x2="100" y2="66" stroke="#e2eaf7" stroke-width="0.6"></line>
+    <line x1="0" y1="33" x2="100" y2="33" stroke="#e2eaf7" stroke-width="0.6"></line>
+    <polyline points="${newsPoints}" fill="none" stroke="#c0392b" stroke-width="1.8"></polyline>
+    <polyline points="${videoPoints}" fill="none" stroke="#1f4e91" stroke-width="1.8"></polyline>
+</svg>
+<div class="admin-trend-legend">
+    <span><span class="admin-trend-dot" style="background:#c0392b"></span>News trend</span>
+    <span><span class="admin-trend-dot" style="background:#1f4e91"></span>Video trend</span>
+    <span>Range: ${selectedRangeDays} days</span>
+</div>`;
+    };
+
+    const setRangeButtonsState = () => {
+        const buttons = [
+            { node: range7dButton, days: 7 },
+            { node: range30dButton, days: 30 },
+            { node: range90dButton, days: 90 }
+        ];
+
+        buttons.forEach((entry) => {
+            if (!entry.node) {
+                return;
+            }
+
+            if (entry.days === selectedRangeDays) {
+                entry.node.classList.add("is-active");
+            } else {
+                entry.node.classList.remove("is-active");
+            }
+        });
+    };
+
+    const exportStatisticsCsv = () => {
+        if (!lastSnapshot) {
+            return;
+        }
+
+        const rows = [
+            ["RangeDays", selectedRangeDays],
+            ["NewsCount", lastSnapshot.stats.newsCount || 0],
+            ["VideosCount", lastSnapshot.stats.videosCount || 0],
+            ["CommentsCount", lastSnapshot.stats.commentsCount || 0],
+            ["UsersCount", lastSnapshot.stats.usersCount || 0],
+            ["VisitorsCount", lastSnapshot.stats.visitorsCount || 0],
+            ["EngagementCount", lastSnapshot.stats.engagementCount || 0],
+            ["GeneratedAt", new Date().toISOString()],
+            [],
+            ["LatestContentType", "Title", "Category", "Status", "PublishedDate"]
+        ];
+
+        lastSnapshot.latestItems.forEach((item) => {
+            rows.push([
+                item.type,
+                item.title,
+                item.category,
+                item.status,
+                formatNewsDate(item.publishedAt)
+            ]);
+        });
+
+        const csv = rows.map((row) => row.map((cell) => {
+            const value = String(cell || "");
+            return `"${value.replace(/"/g, '""')}"`;
+        }).join(",")).join("\n");
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `m62_statistics_${selectedRangeDays}d_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
+
     const renderStatistics = async () => {
         const stats = await fetchDashboardStats();
         const [newsResult, videosResult] = await Promise.all([
@@ -3141,6 +3269,23 @@ function initializeStatisticsPage() {
         ]);
         const newsItems = newsResult.data || [];
         const videoItems = videosResult.data || [];
+        const latestItems = [...newsItems.map((item) => ({
+            type: "News",
+            title: item.title || "Untitled",
+            category: item.category || "General",
+            status: item.status || "published",
+            publishedAt: item.publishedAt || item.createdAt || ""
+        })), ...videoItems.map((item) => ({
+            type: "Video",
+            title: item.title || "Untitled",
+            category: item.category || "General",
+            status: item.status || "published",
+            publishedAt: item.publishedAt || item.createdAt || ""
+        }))].sort((a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()).slice(0, 8);
+        lastSnapshot = {
+            stats,
+            latestItems
+        };
 
         Object.entries(statNodes).forEach(([key, node]) => {
             if (node) {
@@ -3190,6 +3335,8 @@ function initializeStatisticsPage() {
         setProgress(communityProgress, communityProgressText, communityGoal);
 
         renderLatestContentTable(newsItems, videoItems);
+        renderTrendChart(stats);
+        setRangeButtonsState();
 
         if (apiStatus) {
             const apiLikelyOnline = Number(stats.usersCount || 0) > 0 || Number(stats.commentsCount || 0) > 0;
@@ -3201,6 +3348,48 @@ function initializeStatisticsPage() {
     refreshButton.addEventListener("click", () => {
         renderStatistics();
     });
+
+    if (range7dButton) {
+        range7dButton.addEventListener("click", () => {
+            selectedRangeDays = 7;
+            if (lastSnapshot) {
+                renderTrendChart(lastSnapshot.stats);
+                setRangeButtonsState();
+            }
+        });
+    }
+
+    if (range30dButton) {
+        range30dButton.addEventListener("click", () => {
+            selectedRangeDays = 30;
+            if (lastSnapshot) {
+                renderTrendChart(lastSnapshot.stats);
+                setRangeButtonsState();
+            }
+        });
+    }
+
+    if (range90dButton) {
+        range90dButton.addEventListener("click", () => {
+            selectedRangeDays = 90;
+            if (lastSnapshot) {
+                renderTrendChart(lastSnapshot.stats);
+                setRangeButtonsState();
+            }
+        });
+    }
+
+    if (exportCsvButton) {
+        exportCsvButton.addEventListener("click", () => {
+            exportStatisticsCsv();
+        });
+    }
+
+    if (exportPdfButton) {
+        exportPdfButton.addEventListener("click", () => {
+            window.print();
+        });
+    }
 
     renderStatistics();
 }

@@ -35,8 +35,23 @@
                 <h2>Platform Statistics</h2>
                 <p>Monitor publication velocity, user activity, and engagement quality.</p>
             </div>
-            <span class="admin-badge" id="statsGeneratedAt">Live snapshot</span>
+            <div class="admin-actions">
+                <button type="button" id="statsRange7d" class="admin-secondary-btn">7d</button>
+                <button type="button" id="statsRange30d" class="admin-secondary-btn is-active">30d</button>
+                <button type="button" id="statsRange90d" class="admin-secondary-btn">90d</button>
+                <button type="button" id="statsExportCsv" class="admin-secondary-btn">Export CSV</button>
+                <button type="button" id="statsExportPdf" class="admin-secondary-btn">Export PDF</button>
+                <span class="admin-badge" id="statsGeneratedAt">Live snapshot</span>
+            </div>
         </header>
+
+        <section class="admin-grid">
+            <article class="admin-card admin-stack">
+                <h3>Content Trend</h3>
+                <p class="admin-muted">Estimated trend for selected period based on current activity snapshot.</p>
+                <div id="statsTrendChart" class="admin-trend-chart">Loading trend chart...</div>
+            </article>
+        </section>
 
         <section class="admin-grid admin-kpi-grid">
             <article class="admin-card admin-kpi">
