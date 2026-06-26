@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "mongo:dev": "node scripts/start-local-mongo.js"
+    "mongo:dev": "node scripts/start-local-mongo.js",
+    "backup:mongo": "powershell -ExecutionPolicy Bypass -File .\\scripts\\backup-mongodb.ps1"
   },
   "keywords": [
     "m62",

@@ -51,8 +51,16 @@ ADMIN_BOOTSTRAP_EMAIL=m62webtvnigerltd@gmail.com
 ADMIN_BOOTSTRAP_PASSWORD=use-your-current-admin-password
 UPLOAD_MAX_MB=10
 VIDEO_UPLOAD_MAX_MB=200
+REQUEST_BODY_LIMIT_MB=2
+TRUST_PROXY_HOPS=1
 PORT=3000
 ```
+
+Production notes:
+- Set `NODE_ENV=production`
+- Set `MONGODB_INMEMORY_FALLBACK=false`
+- Ensure `JWT_SECRET` is at least 32 characters
+- Set `FRONTEND_ORIGIN` to your real frontend domain(s)
 
 ### 4. Gmail Setup (If using Gmail)
 1. Enable 2-Factor Authentication on your Gmail account
@@ -89,6 +97,17 @@ npm run dev
 ### Production
 ```bash
 npm start
+```
+
+### MongoDB Backup
+Run manual backup (gzip archive) from `backend` folder:
+```powershell
+npm run backup:mongo
+```
+
+Optional arguments:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\backup-mongodb.ps1 -MongoUri "mongodb://127.0.0.1:27017" -DatabaseName "m62_webtv" -RetentionDays 14
 ```
 
 The server will start on `http://localhost:3000`

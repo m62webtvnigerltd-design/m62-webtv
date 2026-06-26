@@ -183,6 +183,21 @@ After deployment:
 - [ ] Mobile responsive (test on phone)
 - [ ] All pages load (About, FAQ, Privacy)
 
+### Backend Security Checklist
+- [ ] `NODE_ENV=production`
+- [ ] `MONGODB_INMEMORY_FALLBACK=false`
+- [ ] `JWT_SECRET` is strong (32+ chars)
+- [ ] `FRONTEND_ORIGIN` only includes trusted domain(s)
+- [ ] `REQUEST_BODY_LIMIT_MB` set to a safe value for production
+- [ ] `TRUST_PROXY_HOPS` configured for your host
+
+### Backup Checklist
+- [ ] `mongodump` is installed on server
+- [ ] Manual backup works: `npm run backup:mongo`
+- [ ] Automatic backup scheduled daily
+- [ ] Backup retention policy is defined (for example 14 days)
+- [ ] Restore test was performed at least once
+
 ---
 
 ## 🔧 TROUBLESHOOTING

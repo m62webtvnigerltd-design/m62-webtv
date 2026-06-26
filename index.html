@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M62 WEB TV NIGER</title>
+    <meta name="description" content="M62 WEB TV NIGER delivers breaking news, politics, economy, sports, entertainment, and live TV coverage from Niger to the world.">
+    <meta name="keywords" content="M62 WEB TV, Niger news, Hausa news, live TV Niger, politics, sports">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="M62 WEB TV NIGER">
+    <meta property="og:description" content="The Voice of Niger to the World. Breaking news, videos, and live TV.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:locale" content="ha_NE">
+    <meta name="theme-color" content="#c0392b">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <header class="main-header">
-    <img src="logo.png" alt="M62 WEB TV Logo" class="logo">
+    <img src="logo.png" alt="M62 WEB TV Logo" class="logo" decoding="async">
     <h1>M62 WEB TV NIGER</h1>
     <p>La Voix Du Peuple | Muryar Jama'a 🇳🇪</p>
 </header>
@@ -47,7 +56,7 @@
 <section class="live-section" id="live">
     <h2>🔴 LIVE TV</h2>
     <div class="video-box">
-        <iframe id="homeLiveTV" src="" allowfullscreen></iframe>
+        <iframe id="homeLiveTV" src="" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
 </section>
 
@@ -65,7 +74,7 @@
     <p>© 2026 M62 WEB TV NIGER | Powered by PDG MULTIMEDIA TV LTD</p>
 </footer>
 
-<script src="js/main.js"></script>
+<script src="js/main.js" defer></script>
 
 </body>
 </html>

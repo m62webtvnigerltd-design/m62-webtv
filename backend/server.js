@@ -14,6 +14,8 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = String(process.env.NODE_ENV || 'development').trim().toLowerCase();
+const IS_PRODUCTION = NODE_ENV === 'production';
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 const COMMENT_ARCHIVE_DAYS = Math.max(Number(process.env.COMMENT_ARCHIVE_DAYS || 180), 1);
 const MONGODB_URI = String(process.env.MONGODB_URI || '').trim();
@@ -25,6 +27,8 @@ const ADMIN_BOOTSTRAP_EMAIL = String(process.env.ADMIN_BOOTSTRAP_EMAIL || '').tr
 const ADMIN_BOOTSTRAP_PASSWORD = String(process.env.ADMIN_BOOTSTRAP_PASSWORD || '').trim();
 const UPLOAD_MAX_MB = Math.max(Number(process.env.UPLOAD_MAX_MB || 10), 1);
 const VIDEO_UPLOAD_MAX_MB = Math.max(Number(process.env.VIDEO_UPLOAD_MAX_MB || 200), 10);
+const REQUEST_BODY_LIMIT_MB = Math.max(Number(process.env.REQUEST_BODY_LIMIT_MB || (IS_PRODUCTION ? 2 : 10)), 1);
+const TRUST_PROXY_HOPS = Math.max(Number(process.env.TRUST_PROXY_HOPS || 1), 0);
 const DATA_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const ENGAGEMENT_FILE = path.join(DATA_DIR, 'engagement.json');
@@ -36,6 +40,16 @@ let NewsModel = null;
 let UserModel = null;
 let VideoModel = null;
 let mongoMemoryServer = null;
+
+// Prevent unbounded memory growth in in-memory rate-limit buckets.
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of rateLimitStore.entries()) {
+        if (!value || value.expiresAt <= now) {
+            rateLimitStore.delete(key);
+        }
+    }
+}, 5 * 60 * 1000).unref();
 
 function getClientIp(req) {
     const forwarded = req.headers['x-forwarded-for'];
@@ -812,13 +826,61 @@ function validateItemParams(req, res, next) {
     next();
 }
 
+function applySecurityHeaders(req, res, next) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+    if (IS_PRODUCTION) {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+
+    next();
+}
+
+function validateProductionConfig(configuredOrigins) {
+    if (!IS_PRODUCTION) {
+        return;
+    }
+
+    const issues = [];
+
+    if (!JWT_SECRET || JWT_SECRET.length < 32) {
+        issues.push('JWT_SECRET must be set and at least 32 characters in production.');
+    }
+
+    if (!MONGODB_URI) {
+        issues.push('MONGODB_URI must be set in production.');
+    }
+
+    if (!configuredOrigins.length) {
+        issues.push('FRONTEND_ORIGIN must include at least one allowed origin in production.');
+    }
+
+    if (MONGODB_INMEMORY_FALLBACK) {
+        issues.push('MONGODB_INMEMORY_FALLBACK should be false in production.');
+    }
+
+    if (issues.length) {
+        throw new Error(`Invalid production configuration: ${issues.join(' ')}`);
+    }
+}
+
 // Middleware
-const localOrigins = ['http://localhost', 'http://localhost:5500', 'http://127.0.0.1:5500'];
+const localOrigins = IS_PRODUCTION ? [] : ['http://localhost', 'http://localhost:5500', 'http://127.0.0.1:5500'];
 const configuredOrigins = String(process.env.FRONTEND_ORIGIN || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
 const allowedOrigins = new Set([...localOrigins, ...configuredOrigins]);
+
+if (TRUST_PROXY_HOPS > 0) {
+    app.set('trust proxy', TRUST_PROXY_HOPS);
+}
+
+app.disable('x-powered-by');
+app.use(applySecurityHeaders);
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -831,8 +893,8 @@ app.use(cors({
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true
 }));
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+app.use(bodyParser.json({ limit: `${REQUEST_BODY_LIMIT_MB}mb` }));
+app.use(bodyParser.urlencoded({ limit: `${REQUEST_BODY_LIMIT_MB}mb`, extended: true }));
 ensureUploadsDirectory();
 app.use('/uploads', express.static(UPLOADS_DIR));
 
@@ -2182,11 +2244,16 @@ async function startServer() {
     const { archivedCount } = readAndArchiveStore();
 
     try {
+        validateProductionConfig(configuredOrigins);
         await connectMongoIfConfigured();
         await ensureBootstrapAdmin();
     } catch (error) {
         mongoReady = false;
-        console.error('❌ MongoDB connection failed:', error.message);
+        console.error('❌ Startup validation/connection failed:', error.message);
+
+        if (IS_PRODUCTION) {
+            process.exit(1);
+        }
     }
 
     app.listen(PORT, () => {
