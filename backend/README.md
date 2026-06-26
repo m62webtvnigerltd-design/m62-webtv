@@ -47,8 +47,8 @@ MONGODB_DB_NAME=m62_webtv
 MONGODB_INMEMORY_FALLBACK=true
 JWT_SECRET=change-this-to-a-very-long-random-secret
 JWT_EXPIRES_IN=7d
-ADMIN_BOOTSTRAP_EMAIL=admin@example.com
-ADMIN_BOOTSTRAP_PASSWORD=change-this-admin-password
+ADMIN_BOOTSTRAP_EMAIL=m62webtvnigerltd@gmail.com
+ADMIN_BOOTSTRAP_PASSWORD=use-your-current-admin-password
 UPLOAD_MAX_MB=10
 VIDEO_UPLOAD_MAX_MB=200
 PORT=3000
@@ -61,14 +61,23 @@ PORT=3000
 
 ## Running the Server
 
+### Recommended local startup
+Start the installed MongoDB Windows service, then launch the backend:
+```powershell
+Start-Service MongoDB
+cd "C:\Users\DELL\Desktop\M62 WEB TV\backend"
+npm start
+```
+
+Or from the project root:
+```powershell
+cd "C:\Users\DELL\Desktop\M62 WEB TV"
+.\start-project.ps1
+```
+
 ### Development (with auto-reload)
 ```bash
 npm run dev
-```
-
-If MongoDB is not installed locally, start a development Mongo daemon in a separate terminal:
-```bash
-npm run mongo:dev
 ```
 
 ### Production

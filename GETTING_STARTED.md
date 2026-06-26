@@ -21,7 +21,7 @@
 
 ---
 
-### PART 2: Setup Backend (for email) (10-15 minutes)
+### PART 2: Setup Backend (for email, admin, and content APIs) (10-15 minutes)
 
 #### Prerequisites Check
 - [ ] Node.js installed? Download from https://nodejs.org
@@ -60,8 +60,16 @@ PORT=3000
 6. Copy the 16-character password
 7. Paste in `.env` file
 
-**5. Start the server:**
-```bash
+**5. Start MongoDB service and backend:**
+```powershell
+cd "C:\Users\DELL\Desktop\M62 WEB TV"
+.\start-project.ps1
+```
+
+Manual option:
+```powershell
+Start-Service MongoDB
+cd "C:\Users\DELL\Desktop\M62 WEB TV\backend"
 npm start
 ```
 
@@ -73,6 +81,11 @@ You should see:
 ```
 
 **✅ Backend is running!**
+
+### Admin Login
+- Page: `admin\login.html`
+- Email: `m62webtvnigerltd@gmail.com`
+- Password: use your current admin password
 
 ---
 
@@ -209,6 +222,19 @@ In `index.html` CSS:
 **Solution:**
 ```bash
 npm install
+```
+
+### "MongoDB service is stopped"
+**Solution:**
+```powershell
+Start-Service MongoDB
+```
+
+### "Start everything with one command"
+**Solution:**
+```powershell
+cd "C:\Users\DELL\Desktop\M62 WEB TV"
+.\start-project.ps1
 ```
 
 ### Contact form not sending email
