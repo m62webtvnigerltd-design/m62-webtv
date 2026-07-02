@@ -22,13 +22,15 @@ Day 2 notes:
 - HARDENED: Production startup validation now rejects localhost/127.0.0.1 in FRONTEND_ORIGIN.
 
 ## Day 3 - Frontend Polish
-- [ ] Replace placeholder content with real content
+- [x] Replace placeholder content with real content
 - [ ] Mobile, tablet, desktop visual QA
 - [ ] Language consistency check (ha/en/fr/ar)
 
 Day 3 progress:
 - Updated public contact phone placeholders in about/faq/privacy pages to match homepage contact number.
-- Remaining: social links, any remaining placeholder emails/labels, and full visual + language QA.
+- Added real social links in homepage footer (Facebook, X/Twitter, YouTube, WhatsApp).
+- Quick browser QA done for homepage and about page.
+- Remaining: full multi-device visual QA and full language consistency pass.
 
 ## Day 4 - Full Integration QA
 - [ ] Admin to public flow test for News CRUD

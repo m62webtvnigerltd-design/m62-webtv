@@ -689,6 +689,25 @@ footer{
     font-size:16px;
 }
 
+.footer-social-links{
+    margin-top:10px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.footer-social-links a{
+    color:#ffffff;
+    text-decoration:none;
+    font-weight:700;
+}
+
+.footer-social-links a:hover{
+    color:#ffcc66;
+}
+
 /* MOBILE */
 @media(max-width:768px){
     .main-header h1{
@@ -729,6 +748,11 @@ footer{
             .carousel-item h3{
                 font-size:24px;
             }
+
+    .footer-social-links{
+        gap:8px;
+        font-size:14px;
+    }
 
     .contact-container{
         grid-template-columns:1fr;
