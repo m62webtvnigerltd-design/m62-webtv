@@ -23,14 +23,17 @@ Day 2 notes:
 
 ## Day 3 - Frontend Polish
 - [x] Replace placeholder content with real content
-- [ ] Mobile, tablet, desktop visual QA
-- [ ] Language consistency check (ha/en/fr/ar)
+- [x] Mobile, tablet, desktop visual QA
+- [x] Language consistency check (ha/en/fr/ar)
 
 Day 3 progress:
 - Updated public contact phone placeholders in about/faq/privacy pages to match homepage contact number.
 - Added real social links in homepage footer (Facebook, X/Twitter, YouTube, WhatsApp).
 - Quick browser QA done for homepage and about page.
-- Remaining: full multi-device visual QA and full language consistency pass.
+- Added two new language options: Zarma and Fulfulde.
+- Expanded Arabic pack to avoid mixed-language fallback on key homepage sections.
+- Completed responsive QA on desktop/tablet/mobile with no horizontal overflow.
+- Completed language QA on ha, dje, ff, en, fr, ar selectors and key translated sections.
 
 ## Day 4 - Full Integration QA
 - [ ] Admin to public flow test for News CRUD
