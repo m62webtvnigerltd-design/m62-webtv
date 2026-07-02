@@ -445,6 +445,8 @@ async function updateDashboardStats() {
     if (totalEngagement) {
         totalEngagement.innerText = String(stats.engagementCount || 0);
     }
+
+    renderAdminDashboardProfile();
 }
 
 async function incrementVisitorCounterIfPublicPage() {
@@ -1865,6 +1867,88 @@ function renderAdminAuthStatus() {
     }
 
     statusNode.innerHTML = "Auth: <strong>Not logged in</strong>";
+}
+
+function getAdminDisplayName(user) {
+    return String(user?.name || user?.fullName || user?.email || "M62 WEB TV Team").trim();
+}
+
+function getAdminAvatarPhotoUrl(user) {
+    return String(
+        user?.photoUrl ||
+        user?.avatarUrl ||
+        user?.imageUrl ||
+        user?.picture ||
+        user?.profilePhoto ||
+        ""
+    ).trim();
+}
+
+function getAdminAvatarInitials(displayName) {
+    const name = String(displayName || "").trim();
+
+    if (!name) {
+        return "MW";
+    }
+
+    const nameParts = name.split(/\s+/).filter(Boolean);
+    if (nameParts.length >= 2) {
+        return `${nameParts[0][0] || "M"}${nameParts[1][0] || "W"}`.toUpperCase();
+    }
+
+    const emailHandle = name.split("@")[0] || name;
+    const letters = emailHandle.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase();
+
+    return letters || "MW";
+}
+
+function renderAdminDashboardProfile() {
+    const avatarNode = document.getElementById("adminDashboardAvatar");
+    const nameNode = document.getElementById("adminDashboardUserName");
+    const roleNode = document.getElementById("adminDashboardUserRole");
+
+    if (!avatarNode && !nameNode && !roleNode) {
+        return;
+    }
+
+    const user = getAdminAuthUser();
+    const displayName = getAdminDisplayName(user);
+    const role = String(user?.role || "Admin").trim();
+    const initials = getAdminAvatarInitials(displayName);
+    const photoUrl = getAdminAvatarPhotoUrl(user);
+
+    if (nameNode) {
+        nameNode.textContent = displayName;
+    }
+
+    if (roleNode) {
+        roleNode.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+    }
+
+    if (!avatarNode) {
+        return;
+    }
+
+    avatarNode.classList.remove("has-photo");
+    avatarNode.textContent = initials;
+    avatarNode.innerHTML = "";
+
+    if (!photoUrl) {
+        avatarNode.textContent = initials;
+        return;
+    }
+
+    const image = document.createElement("img");
+    image.alt = `${displayName} profile photo`;
+    image.src = photoUrl;
+    image.addEventListener("error", () => {
+        avatarNode.classList.remove("has-photo");
+        avatarNode.innerHTML = "";
+        avatarNode.textContent = initials;
+    });
+
+    avatarNode.classList.add("has-photo");
+    avatarNode.appendChild(image);
 }
 
 async function loginAdmin(email, password) {
