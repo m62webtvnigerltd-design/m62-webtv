@@ -10,10 +10,15 @@ Goal: finish production-ready launch in 7 days with clear daily checkpoints.
 - [ ] Commit pending dashboard/profile changes
 
 ## Day 2 - Backend Hardening
-- [ ] Validate production environment variables
-- [ ] Confirm JWT, CORS, and rate limit behavior
-- [ ] Confirm MongoDB connection policy for production
-- [ ] Verify backup script and retention settings
+- [x] Validate production environment variables
+- [x] Confirm JWT, CORS, and rate limit behavior
+- [x] Confirm MongoDB connection policy for production
+- [x] Verify backup script and retention settings
+
+Day 2 notes:
+- PASS: NODE_ENV production, JWT length >= 32, MongoDB URI configured, in-memory fallback disabled, request body limit and trust proxy set.
+- PASS: Backup command executed successfully and generated a .gz archive in backend/backups.
+- ACTION: FRONTEND_ORIGIN currently includes localhost while NODE_ENV is production; remove localhost before go-live.
 
 ## Day 3 - Frontend Polish
 - [ ] Replace placeholder content with real content
