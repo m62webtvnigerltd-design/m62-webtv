@@ -25,6 +25,10 @@ Day 2 notes:
 - [ ] Mobile, tablet, desktop visual QA
 - [ ] Language consistency check (ha/en/fr/ar)
 
+Day 3 progress:
+- Updated public contact phone placeholders in about/faq/privacy pages to match homepage contact number.
+- Remaining: social links, any remaining placeholder emails/labels, and full visual + language QA.
+
 ## Day 4 - Full Integration QA
 - [ ] Admin to public flow test for News CRUD
 - [ ] Admin to public flow test for Videos CRUD
