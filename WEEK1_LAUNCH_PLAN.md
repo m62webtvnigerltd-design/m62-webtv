@@ -51,16 +51,22 @@ Day 4 notes:
 - FIXED: Earlier failures were test-script mismatches (payload field names, route naming, and PowerShell multipart method), not backend logic regressions.
 
 ## Day 5 - Deployment
-- [ ] Deploy backend
+- [x] Deploy backend
 - [ ] Deploy frontend
-- [ ] Connect frontend to production API URL
-- [ ] Run smoke test on production URLs
+- [x] Connect frontend to production API URL
+- [x] Run smoke test on production URLs
 
 Day 5 kickoff:
 - Ready to start deployment sequence immediately after Day 4 QA closure.
 - Preflight started: production backend startup check executed.
 - Blocker identified: `FRONTEND_ORIGIN` is empty in backend environment, so production mode startup is rejected by validation.
 - Next action: set real frontend production origin (for example Netlify/Vercel domain), then re-run production startup check and smoke tests.
+
+Day 5 progress:
+- Backend deployed live on Railway: https://m62-webtv-production.up.railway.app
+- Frontend production API fallback now points to Railway backend in `js/main.js`.
+- Production smoke checks PASS for `/api/health`, `/api/stats/dashboard`, and CORS preflight from `https://m62webtv.netlify.app`.
+- Admin-key protected smoke check returns 401 when local key differs from Railway key (expected until keys are aligned).
 
 ## Day 6 - Security and Monitoring
 - [ ] Final security checklist

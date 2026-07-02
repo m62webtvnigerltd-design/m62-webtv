@@ -1,3 +1,5 @@
+const DEFAULT_PRODUCTION_API_BASE_URL = "https://m62-webtv-production.up.railway.app";
+
 function resolveApiBaseUrl() {
     const fromWindow = typeof window !== "undefined" ? window.M62_API_BASE_URL : "";
     if (fromWindow) {
@@ -15,8 +17,8 @@ function resolveApiBaseUrl() {
             return "http://localhost:3000";
         }
 
-        // In production, default to same-origin API when no explicit backend URL is set.
-        return window.location.origin;
+        // In production, default to deployed backend API host.
+        return DEFAULT_PRODUCTION_API_BASE_URL;
     }
 
     return "http://localhost:3000";
