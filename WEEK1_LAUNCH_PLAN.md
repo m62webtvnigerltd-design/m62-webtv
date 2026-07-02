@@ -18,7 +18,8 @@ Goal: finish production-ready launch in 7 days with clear daily checkpoints.
 Day 2 notes:
 - PASS: NODE_ENV production, JWT length >= 32, MongoDB URI configured, in-memory fallback disabled, request body limit and trust proxy set.
 - PASS: Backup command executed successfully and generated a .gz archive in backend/backups.
-- ACTION: FRONTEND_ORIGIN currently includes localhost while NODE_ENV is production; remove localhost before go-live.
+- FIXED: FRONTEND_ORIGIN localhost entry removed from local .env.
+- HARDENED: Production startup validation now rejects localhost/127.0.0.1 in FRONTEND_ORIGIN.
 
 ## Day 3 - Frontend Polish
 - [ ] Replace placeholder content with real content

@@ -901,6 +901,14 @@ function validateProductionConfig(configuredOrigins) {
         issues.push('FRONTEND_ORIGIN must include at least one allowed origin in production.');
     }
 
+    const hasLocalhostOrigin = configuredOrigins.some((origin) =>
+        /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(origin)
+    );
+
+    if (hasLocalhostOrigin) {
+        issues.push('FRONTEND_ORIGIN must not include localhost or 127.0.0.1 in production.');
+    }
+
     if (MONGODB_INMEMORY_FALLBACK) {
         issues.push('MONGODB_INMEMORY_FALLBACK should be false in production.');
     }
