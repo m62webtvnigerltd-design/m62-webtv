@@ -36,17 +36,28 @@ Day 3 progress:
 - Completed language QA on ha, dje, ff, en, fr, ar selectors and key translated sections.
 
 ## Day 4 - Full Integration QA
-- [ ] Admin to public flow test for News CRUD
-- [ ] Admin to public flow test for Videos CRUD
-- [ ] Comments and ratings flow test
-- [ ] Login and password reset flow test
-- [ ] Upload flow test (image and video)
+- [x] Admin to public flow test for News CRUD
+- [x] Admin to public flow test for Videos CRUD
+- [x] Comments and ratings flow test
+- [x] Login and password reset flow test
+- [x] Upload flow test (image and video)
+
+Day 4 notes:
+- PASS: JWT auth recovered and verified via password reset confirm -> login -> auth me -> users list.
+- PASS: News CRUD endpoints verified end-to-end with admin access.
+- PASS: Videos CRUD endpoints verified end-to-end with admin access.
+- PASS: Engagement comments + ratings + summary verified after aligning request payload/route names.
+- PASS: Upload image/video endpoints verified with real media files and valid multipart MIME types.
+- FIXED: Earlier failures were test-script mismatches (payload field names, route naming, and PowerShell multipart method), not backend logic regressions.
 
 ## Day 5 - Deployment
 - [ ] Deploy backend
 - [ ] Deploy frontend
 - [ ] Connect frontend to production API URL
 - [ ] Run smoke test on production URLs
+
+Day 5 kickoff:
+- Ready to start deployment sequence immediately after Day 4 QA closure.
 
 ## Day 6 - Security and Monitoring
 - [ ] Final security checklist
@@ -69,3 +80,4 @@ Day 3 progress:
 - Checked git status and confirmed 3 modified files
 - Verified no editor errors in changed files
 - Verified JavaScript syntax check passes for js/main.js
+- Closed Day 4 integration QA with verified PASS matrix.
