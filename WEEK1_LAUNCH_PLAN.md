@@ -58,6 +58,9 @@ Day 4 notes:
 
 Day 5 kickoff:
 - Ready to start deployment sequence immediately after Day 4 QA closure.
+- Preflight started: production backend startup check executed.
+- Blocker identified: `FRONTEND_ORIGIN` is empty in backend environment, so production mode startup is rejected by validation.
+- Next action: set real frontend production origin (for example Netlify/Vercel domain), then re-run production startup check and smoke tests.
 
 ## Day 6 - Security and Monitoring
 - [ ] Final security checklist
