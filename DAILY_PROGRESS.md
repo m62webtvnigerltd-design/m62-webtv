@@ -32,7 +32,7 @@
 - Frontend live deploy still needs to be confirmed if the Netlify URL changes.
 
 ## Next Step
-- Align Railway `ADMIN_API_KEY` with the key used for protected smoke tests, then run one final authenticated admin CRUD smoke on production.
+- Move to Day 6 security and monitoring checklist.
 
 ## Final Day 5 Smoke Result
 - PASS: frontend homepage live
@@ -41,7 +41,10 @@
 - PASS: admin dashboard page live
 - PASS: deployed `js/main.js` contains Railway production API URL
 - PASS: public production API endpoints return HTTP 200
-- NOTE: protected admin-key smoke on production returns 401 until the Railway `ADMIN_API_KEY` is tested with the same current value used by the live service.
+- PASS: production admin login flow recovered and works.
+- PASS: admin news edit/publish flow verified.
+- PASS: published test news is visible from public production API.
+- PASS: backend currently responds as production mode (reset endpoint no longer exposes token).
 
 ## Day 5 (Tomorrow) - Combined Launch Tasks (No Skipping)
 

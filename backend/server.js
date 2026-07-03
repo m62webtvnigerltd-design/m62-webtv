@@ -38,6 +38,7 @@ const rateLimitStore = new Map();
 const passwordResetStore = new Map();
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = Math.max(Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30), 5);
 const PASSWORD_RESET_TOKEN_TTL_MS = PASSWORD_RESET_TOKEN_TTL_MINUTES * 60 * 1000;
+const MAIL_SEND_TIMEOUT_MS = Math.max(Number(process.env.MAIL_SEND_TIMEOUT_MS || 12000), 3000);
 let mongoReady = false;
 let NewsModel = null;
 let UserModel = null;
@@ -997,8 +998,23 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
-    }
+    },
+    connectionTimeout: MAIL_SEND_TIMEOUT_MS,
+    greetingTimeout: MAIL_SEND_TIMEOUT_MS,
+    socketTimeout: MAIL_SEND_TIMEOUT_MS
 });
+
+async function sendMailWithTimeout(mailOptions, timeoutMs = MAIL_SEND_TIMEOUT_MS) {
+    const timeoutError = new Error(`Email send timed out after ${timeoutMs}ms`);
+    timeoutError.code = 'EMAIL_TIMEOUT';
+
+    return Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) => {
+            setTimeout(() => reject(timeoutError), timeoutMs).unref();
+        })
+    ]);
+}
 
 // Validation middleware
 function validateContactForm(req, res, next) {
@@ -1073,8 +1089,8 @@ app.post('/api/contact', createRateLimiter(5 * 60 * 1000, 5), validateContactFor
         };
 
         // Send emails
-        await transporter.sendMail(adminMailOptions);
-        await transporter.sendMail(userMailOptions);
+        await sendMailWithTimeout(adminMailOptions);
+        await sendMailWithTimeout(userMailOptions);
 
         // Log successful submission
         console.log(`✅ Contact form submitted by ${name} (${email})`);
@@ -1155,10 +1171,12 @@ app.post('/api/test-email', async (req, res) => {
             html: '<h2>Test Email</h2><p>Server is working correctly!</p>'
         };
 
-        await transporter.sendMail(testMailOptions);
+        await sendMailWithTimeout(testMailOptions);
         res.json({ success: true, message: 'Test email sent successfully!' });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        const isTimeout = error && error.code === 'EMAIL_TIMEOUT';
+        const statusCode = isTimeout ? 504 : 500;
+        res.status(statusCode).json({ success: false, message: error.message });
     }
 });
 
@@ -1325,7 +1343,7 @@ app.post('/api/auth/password-reset/request', createRateLimiter(10 * 60 * 1000, 6
                     `
                 };
 
-                transporter.sendMail(mailOptions).catch((mailError) => {
+                sendMailWithTimeout(mailOptions).catch((mailError) => {
                     console.warn('Password reset mail failed:', mailError.message);
                 });
             }

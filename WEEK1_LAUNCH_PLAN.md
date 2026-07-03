@@ -69,6 +69,7 @@ Day 5 progress:
 - Production smoke checks PASS for `/api/health`, `/api/stats/dashboard`, and CORS preflight from `https://m62webtv.netlify.app`.
 - Admin-key protected smoke check returns 401 when local key differs from Railway key (expected until keys are aligned).
 - Final frontend smoke PASS: homepage, about page, admin login page, admin dashboard page, deployed `js/main.js`, and public API-backed endpoints all respond successfully.
+- Final admin/public verification PASS: admin login succeeded, news update/publish succeeded, published item is visible on public API, and environment check confirms production mode.
 
 ## Day 6 - Security and Monitoring
 - [ ] Final security checklist

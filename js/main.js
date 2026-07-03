@@ -14,14 +14,16 @@ function resolveApiBaseUrl() {
     if (typeof window !== "undefined" && (window.location.protocol === "http:" || window.location.protocol === "https:")) {
         const host = window.location.hostname;
         if (host === "localhost" || host === "127.0.0.1") {
-            return "http://localhost:3000";
+            const forceLocalApi = localStorage.getItem("m62UseLocalApi") === "true";
+            return forceLocalApi ? "http://localhost:3000" : DEFAULT_PRODUCTION_API_BASE_URL;
         }
 
         // In production, default to deployed backend API host.
         return DEFAULT_PRODUCTION_API_BASE_URL;
     }
 
-    return "http://localhost:3000";
+    // For direct file:// previews, prefer the deployed backend unless an explicit override is set.
+    return DEFAULT_PRODUCTION_API_BASE_URL;
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
@@ -2318,7 +2320,8 @@ async function confirmAdminPasswordReset(token, password) {
     return payload;
 }
 
-async function synchronizeAdminSession() {
+async function synchronizeAdminSession(options = {}) {
+    const { allowCachedFallback = true } = options;
     const token = getAdminAuthToken();
 
     if (!token) {
@@ -2341,6 +2344,10 @@ async function synchronizeAdminSession() {
         setAdminAuthUser(user);
         return user;
     } catch (error) {
+        if (!allowCachedFallback) {
+            return null;
+        }
+
         return getAdminAuthUser();
     }
 }
@@ -2828,6 +2835,9 @@ function initializeAdminLoginPage() {
     const resetNewPasswordInput = document.getElementById("adminResetNewPassword");
     const resetRequestSubmit = document.getElementById("adminResetRequestSubmit");
     const resetConfirmSubmit = document.getElementById("adminResetConfirmSubmit");
+    const sessionActions = document.getElementById("adminLoginSessionActions");
+    const openDashboardLink = document.getElementById("adminLoginOpenDashboard");
+    const signOutLink = document.getElementById("adminLoginSignOut");
 
     if (!form || !emailInput || !passwordInput || !submitButton || !statusNode) {
         return;
@@ -2848,12 +2858,32 @@ function initializeAdminLoginPage() {
         sessionStorage.removeItem("m62AdminLoginMessage");
     }
 
-    synchronizeAdminSession().then((existingUser) => {
+    synchronizeAdminSession({ allowCachedFallback: false }).then((existingUser) => {
         if (existingUser && existingUser.email) {
             statusNode.textContent = `Already logged in as ${existingUser.email}`;
             statusNode.className = "status success";
+            submitButton.disabled = true;
+            if (sessionActions) {
+                sessionActions.style.display = "flex";
+            }
+            if (openDashboardLink) {
+                openDashboardLink.focus?.();
+            }
         }
     });
+
+    if (signOutLink) {
+        signOutLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            clearAdminAuthSession();
+            submitButton.disabled = false;
+            statusNode.textContent = "Signed out. You can sign in again.";
+            statusNode.className = "status";
+            if (sessionActions) {
+                sessionActions.style.display = "none";
+            }
+        });
+    }
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
