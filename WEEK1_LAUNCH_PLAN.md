@@ -52,7 +52,7 @@ Day 4 notes:
 
 ## Day 5 - Deployment
 - [x] Deploy backend
-- [ ] Deploy frontend
+- [x] Deploy frontend
 - [x] Connect frontend to production API URL
 - [x] Run smoke test on production URLs
 
@@ -64,9 +64,11 @@ Day 5 kickoff:
 
 Day 5 progress:
 - Backend deployed live on Railway: https://m62-webtv-production.up.railway.app
+- Frontend deployed live on Netlify: https://6a476a2792dcce7220bbc6d1--celadon-sopapillas-d0a2ee.netlify.app/
 - Frontend production API fallback now points to Railway backend in `js/main.js`.
 - Production smoke checks PASS for `/api/health`, `/api/stats/dashboard`, and CORS preflight from `https://m62webtv.netlify.app`.
 - Admin-key protected smoke check returns 401 when local key differs from Railway key (expected until keys are aligned).
+- Final frontend smoke PASS: homepage, about page, admin login page, admin dashboard page, deployed `js/main.js`, and public API-backed endpoints all respond successfully.
 
 ## Day 6 - Security and Monitoring
 - [ ] Final security checklist
