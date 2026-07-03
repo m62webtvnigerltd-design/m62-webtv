@@ -34,6 +34,12 @@
 ## Next Step
 - Move to Day 6 security and monitoring checklist.
 
+## Day 6 Update
+- PASS: production security baseline checks completed.
+- PASS: quick performance baseline completed.
+- ADDED: `backend/scripts/day6-uptime-check.ps1` for automated health monitoring.
+- VERIFIED: uptime script returns PASS against production API health endpoint.
+
 ## Final Day 5 Smoke Result
 - PASS: frontend homepage live
 - PASS: about page live

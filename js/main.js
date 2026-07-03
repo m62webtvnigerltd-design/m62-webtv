@@ -27,6 +27,36 @@ function resolveApiBaseUrl() {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
+
+function resolveDataSaverMode() {
+    const override = String(localStorage.getItem("m62DataSaver") || "auto").toLowerCase();
+    if (override === "true") {
+        return true;
+    }
+
+    if (override === "false") {
+        return false;
+    }
+
+    const connection = typeof navigator !== "undefined"
+        ? (navigator.connection || navigator.mozConnection || navigator.webkitConnection)
+        : null;
+
+    if (!connection) {
+        return false;
+    }
+
+    const effectiveType = String(connection.effectiveType || "").toLowerCase();
+    return Boolean(connection.saveData) || effectiveType.includes("2g") || effectiveType === "slow-2g";
+}
+
+const DATA_SAVER_ENABLED = resolveDataSaverMode();
+const HOME_NEWS_PAGE_SIZE = DATA_SAVER_ENABLED ? 6 : 12;
+const HOME_FEATURED_PAGE_SIZE = DATA_SAVER_ENABLED ? 4 : 8;
+const HOME_CAROUSEL_PAGE_SIZE = DATA_SAVER_ENABLED ? 3 : 6;
+const HOME_VIDEOS_PAGE_SIZE = DATA_SAVER_ENABLED ? 4 : 12;
+const HOME_GALLERY_PAGE_SIZE = DATA_SAVER_ENABLED ? 6 : 10;
+const HOME_GALLERY_MAX_ITEMS = DATA_SAVER_ENABLED ? 6 : 12;
 const DEFAULT_LANGUAGE = "ha";
 const SUPPORTED_LANGUAGES = ["ha", "dje", "ff", "en", "fr", "ar"];
 let currentLanguage = DEFAULT_LANGUAGE;
@@ -1683,7 +1713,32 @@ function loadHomeLiveTV() {
     const liveTV = readStore("liveTV", null);
     const iframe = document.getElementById("homeLiveTV");
 
-    if (iframe && liveTV && liveTV.url) {
+    if (!iframe) {
+        return;
+    }
+
+    const videoBox = iframe.closest(".video-box");
+    if (videoBox) {
+        const existingHint = videoBox.querySelector(".data-saver-live-hint");
+        if (existingHint) {
+            existingHint.remove();
+        }
+    }
+
+    if (DATA_SAVER_ENABLED) {
+        iframe.removeAttribute("src");
+
+        if (videoBox && liveTV && liveTV.url) {
+            const hint = document.createElement("p");
+            hint.className = "data-saver-live-hint";
+            hint.innerHTML = `Data saver is ON. <a href="${escapeHtml(liveTV.url)}" target="_blank" rel="noopener noreferrer">Open live stream</a>`;
+            videoBox.appendChild(hint);
+        }
+
+        return;
+    }
+
+    if (liveTV && liveTV.url) {
         iframe.src = liveTV.url;
     }
 }
@@ -1822,7 +1877,7 @@ async function renderHomeNews() {
         return;
     }
 
-    const result = await fetchNewsList({ status: "published", pageSize: 12 });
+    const result = await fetchNewsList({ status: "published", pageSize: HOME_NEWS_PAGE_SIZE });
     const news = result.data || [];
 
     if (!news.length) {
@@ -1832,11 +1887,11 @@ async function renderHomeNews() {
 
     container.innerHTML = news.map((item, index) => `
 <article class="news-card">
-    <img class="news-cover" loading="lazy" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
+    <img class="news-cover" loading="lazy" decoding="async" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
     <h3>${escapeHtml(item.title)}</h3>
     <p><strong>Date:</strong> ${escapeHtml(formatNewsDate(item.publishedAt || item.createdAt))}</p>
     <p>${escapeHtml(item.summary || item.content || "")}</p>
-    ${renderEngagementWidget("news", item.id || `news_${index + 1}`)}
+    ${DATA_SAVER_ENABLED ? "" : renderEngagementWidget("news", item.id || `news_${index + 1}`)}
 </article>
 `).join("");
 }
@@ -1849,7 +1904,7 @@ async function renderFeaturedNews() {
         return;
     }
 
-    const result = await fetchNewsList({ status: "published", pageSize: 8 });
+    const result = await fetchNewsList({ status: "published", pageSize: HOME_FEATURED_PAGE_SIZE });
     const news = (result.data || []).slice(0, 4);
 
     if (!news.length) {
@@ -1860,7 +1915,7 @@ async function renderFeaturedNews() {
     container.innerHTML = news.map((item, index) => `
 <article class="featured-card">
     <span class="featured-badge">${index === 0 ? escapeHtml(tr("topStory")) : escapeHtml(tr("featured"))}</span>
-    <img class="featured-cover" loading="lazy" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
+    <img class="featured-cover" loading="lazy" decoding="async" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
     <h3>${escapeHtml(item.title)}</h3>
     <p>${escapeHtml(item.summary || item.content || "")}</p>
 </article>
@@ -1911,7 +1966,7 @@ async function renderFeaturedCarousel() {
         return;
     }
 
-    const result = await fetchNewsList({ status: "published", pageSize: 6 });
+    const result = await fetchNewsList({ status: "published", pageSize: HOME_CAROUSEL_PAGE_SIZE });
     homeCarouselItems = (result.data || []).slice(0, 4);
 
     if (!homeCarouselItems.length) {
@@ -1987,7 +2042,7 @@ async function renderHomeVideos() {
         return;
     }
 
-    const result = await fetchVideosList({ status: "published", pageSize: 12 });
+    const result = await fetchVideosList({ status: "published", pageSize: HOME_VIDEOS_PAGE_SIZE });
     const videos = result.data || [];
 
     if (!videos.length) {
@@ -1997,13 +2052,13 @@ async function renderHomeVideos() {
 
     container.innerHTML = videos.map((video, index) => `
 <article class="video-card">
-    ${video.thumbnailUrl ? `<img class="news-cover" loading="lazy" src="${escapeHtml(video.thumbnailUrl)}" alt="${escapeHtml(video.title)}">` : ""}
+    ${video.thumbnailUrl ? `<img class="news-cover" loading="lazy" decoding="async" src="${escapeHtml(video.thumbnailUrl)}" alt="${escapeHtml(video.title)}">` : ""}
     <h3>${escapeHtml(video.title)}</h3>
     <p>${escapeHtml(video.description || "")}</p>
-    ${video.videoUrl && video.videoUrl.includes('/uploads/')
+    ${(video.videoUrl && video.videoUrl.includes('/uploads/') && !DATA_SAVER_ENABLED)
         ? `<video controls style="width:100%;max-height:240px;" src="${escapeHtml(video.videoUrl)}"></video>`
         : `<p><a href="${escapeHtml(video.videoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(tr("watchVideo"))}</a></p>`}
-    ${renderEngagementWidget("video", video.id || `video_${index + 1}`)}
+    ${DATA_SAVER_ENABLED ? "" : renderEngagementWidget("video", video.id || `video_${index + 1}`)}
 </article>
 `).join("");
 }
@@ -2016,8 +2071,8 @@ async function renderHomeGallery() {
     }
 
     const [newsResult, videoResult] = await Promise.all([
-        fetchNewsList({ status: "published", pageSize: 10 }),
-        fetchVideosList({ status: "published", pageSize: 10 })
+        fetchNewsList({ status: "published", pageSize: HOME_GALLERY_PAGE_SIZE }),
+        fetchVideosList({ status: "published", pageSize: HOME_GALLERY_PAGE_SIZE })
     ]);
 
     const newsImages = (newsResult.data || [])
@@ -2034,7 +2089,7 @@ async function renderHomeGallery() {
             caption: item.title || tr("videoThumbnail")
         }));
 
-    const items = [...newsImages, ...videoImages].slice(0, 12);
+    const items = [...newsImages, ...videoImages].slice(0, HOME_GALLERY_MAX_ITEMS);
 
     if (!items.length) {
         container.innerHTML = `<p>${escapeHtml(tr("noGalleryYet"))}</p>`;
@@ -2043,7 +2098,7 @@ async function renderHomeGallery() {
 
     container.innerHTML = items.map((item) => `
 <article class="gallery-card">
-    <img class="gallery-photo" loading="lazy" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption)}">
+    <img class="gallery-photo" loading="lazy" decoding="async" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption)}">
     <p>${escapeHtml(item.caption)}</p>
 </article>
 `).join("");
@@ -2838,6 +2893,10 @@ function initializeAdminLoginPage() {
     const sessionActions = document.getElementById("adminLoginSessionActions");
     const openDashboardLink = document.getElementById("adminLoginOpenDashboard");
     const signOutLink = document.getElementById("adminLoginSignOut");
+    const currentPath = String(window.location.pathname || "").toLowerCase();
+    const dashboardPath = currentPath.includes("/admin/")
+        ? currentPath.replace(/[^/]+$/, "dashboard.html")
+        : "admin/dashboard.html";
 
     if (!form || !emailInput || !passwordInput || !submitButton || !statusNode) {
         return;
@@ -2904,9 +2963,15 @@ function initializeAdminLoginPage() {
             const data = await loginAdmin(email, password);
             setAdminAuthToken(String(data.token || ""));
             setAdminAuthUser(data.user || null);
-            statusNode.textContent = "Login successful. You can now open moderation.";
+            statusNode.textContent = "Login successful. Redirecting to dashboard...";
             statusNode.className = "status success";
             passwordInput.value = "";
+            if (sessionActions) {
+                sessionActions.style.display = "flex";
+            }
+            setTimeout(() => {
+                window.location.href = dashboardPath;
+            }, 500);
         } catch (error) {
             statusNode.textContent = error.message || "Login failed.";
             statusNode.className = "status error";
@@ -4045,7 +4110,10 @@ async function initializeHomePage() {
     ]);
     initializeFeaturedCarouselControls();
     initializeHomeSearch();
-    await refreshEngagementWidgets();
+
+    if (!DATA_SAVER_ENABLED) {
+        await refreshEngagementWidgets();
+    }
 }
 
 function initializePublicContactForms() {

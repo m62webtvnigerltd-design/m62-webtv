@@ -72,9 +72,14 @@ Day 5 progress:
 - Final admin/public verification PASS: admin login succeeded, news update/publish succeeded, published item is visible on public API, and environment check confirms production mode.
 
 ## Day 6 - Security and Monitoring
-- [ ] Final security checklist
-- [ ] Performance sanity checks
-- [ ] Uptime/log monitoring setup
+- [x] Final security checklist
+- [x] Performance sanity checks
+- [x] Uptime/log monitoring setup
+
+Day 6 notes:
+- PASS: security baseline checks on production (health, headers, CORS allow/block, invalid auth, production reset behavior).
+- PASS: performance sanity baseline captured (`/api/health`, `/api/stats/dashboard`, `/api/news?page=1&pageSize=5`).
+- ADDED: uptime check script at `backend/scripts/day6-uptime-check.ps1` with non-zero exit on failure for scheduler/CI use.
 
 ## Day 7 - Final QA and Go Live
 - [ ] Regression test key user journeys
