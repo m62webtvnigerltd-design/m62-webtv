@@ -1893,7 +1893,7 @@ async function renderHomeNews() {
 
     container.innerHTML = news.map((item, index) => `
 <article class="news-card">
-    <img class="news-cover" loading="lazy" decoding="async" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
+    <img class="news-cover" loading="lazy" decoding="async" fetchpriority="low" style="aspect-ratio:16/9;" src="${escapeHtml(item.coverImageUrl || defaultCover)}" alt="${escapeHtml(item.title)}">
     <h3>${escapeHtml(item.title)}</h3>
     <p><strong>Date:</strong> ${escapeHtml(formatNewsDate(item.publishedAt || item.createdAt))}</p>
     <p>${escapeHtml(item.summary || item.content || "")}</p>
@@ -2105,7 +2105,7 @@ async function renderHomeVideos() {
 
     container.innerHTML = videos.map((video, index) => `
 <article class="video-card">
-    ${video.thumbnailUrl ? `<img class="news-cover" loading="lazy" decoding="async" src="${escapeHtml(video.thumbnailUrl)}" alt="${escapeHtml(video.title)}">` : ""}
+    ${video.thumbnailUrl ? `<img class="news-cover" loading="lazy" decoding="async" fetchpriority="low" style="aspect-ratio:16/9;" src="${escapeHtml(video.thumbnailUrl)}" alt="${escapeHtml(video.title)}">` : ""}
     <h3>${escapeHtml(video.title)}</h3>
     <p>${escapeHtml(video.description || "")}</p>
     ${(video.videoUrl && video.videoUrl.includes('/uploads/') && !DATA_SAVER_ENABLED)
@@ -2151,7 +2151,7 @@ async function renderHomeGallery() {
 
     container.innerHTML = items.map((item) => `
 <article class="gallery-card">
-    <img class="gallery-photo" loading="lazy" decoding="async" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption)}">
+    <img class="gallery-photo" loading="lazy" decoding="async" style="aspect-ratio:auto 16/9;" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption)}">
     <p>${escapeHtml(item.caption)}</p>
 </article>
 `).join("");
