@@ -27,4 +27,4 @@ User-agent: AhrefsBot
 Crawl-delay: 10
 
 # Sitemap location
-Sitemap: http://m62webtv.ne/sitemap.xml
+Sitemap: https://m62-webtv.m62webtvnigerltd.workers.dev/sitemap.xml
