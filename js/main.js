@@ -62,6 +62,7 @@ const HOME_CAROUSEL_PAGE_SIZE = DATA_SAVER_ENABLED ? 3 : 6;
 const HOME_VIDEOS_PAGE_SIZE = DATA_SAVER_ENABLED ? 4 : 12;
 const HOME_GALLERY_PAGE_SIZE = DATA_SAVER_ENABLED ? 6 : 10;
 const HOME_GALLERY_MAX_ITEMS = DATA_SAVER_ENABLED ? 6 : 12;
+const HOME_TICKER_PAGE_SIZE = DATA_SAVER_ENABLED ? 6 : 12;
 const DEFAULT_LANGUAGE = "ha";
 const SUPPORTED_LANGUAGES = ["ha", "dje", "ff", "en", "fr", "ar"];
 let currentLanguage = DEFAULT_LANGUAGE;
@@ -2038,6 +2039,53 @@ function initializeHomeSearch() {
             runSearch();
         }
     });
+}
+
+function getBreakingTickerFallbackItems() {
+    return [
+        "Niamey Headlines: Politics, Economy, Security and Community Updates",
+        "Live Desk: 24/7 Multilingual Coverage in Hausa, French, English and Arabic",
+        "Sports Now: Regional football analysis and international match reports",
+        "Special Report: Youth, Innovation and Digital Media in Niger",
+        "Watch Live: Stay connected with M62 WEB TV global audience feed"
+    ];
+}
+
+function buildBreakingTickerMarkup(items) {
+    return items.map((text) => `<span>${escapeHtml(text)}</span>`).join("");
+}
+
+function normalizeBreakingTickerItems(newsItems) {
+    return (newsItems || [])
+        .map((item) => String(item.title || item.summary || item.content || "").trim())
+        .filter(Boolean)
+        .slice(0, 10);
+}
+
+async function renderBreakingTicker() {
+    const primaryTrack = document.getElementById("breakingTickerTrackPrimary");
+    const secondaryTrack = document.getElementById("breakingTickerTrackSecondary");
+
+    if (!primaryTrack || !secondaryTrack) {
+        return;
+    }
+
+    let tickerItems = [];
+
+    try {
+        const result = await fetchNewsList({ status: "published", pageSize: HOME_TICKER_PAGE_SIZE });
+        tickerItems = normalizeBreakingTickerItems(result.data);
+    } catch (error) {
+        tickerItems = [];
+    }
+
+    if (!tickerItems.length) {
+        tickerItems = getBreakingTickerFallbackItems();
+    }
+
+    const markup = buildBreakingTickerMarkup(tickerItems);
+    primaryTrack.innerHTML = markup;
+    secondaryTrack.innerHTML = markup;
 }
 
 async function renderHomeVideos() {
@@ -4107,6 +4155,7 @@ function bindEngagementForms() {
 async function initializeHomePage() {
     ensureContentIds();
     await Promise.all([
+        renderBreakingTicker(),
         renderFeaturedCarousel(),
         renderHomeNews(),
         renderFeaturedNews(),

@@ -18,9 +18,23 @@
 <body>
 
 <header class="main-header">
+    <div class="header-topline" aria-label="Global desk updates">
+        <span>GLOBAL NEWSROOM • NIAMEY</span>
+        <span>24/7 LIVE • MULTILINGUAL COVERAGE</span>
+        <span>AFRICA TO THE WORLD</span>
+    </div>
+
     <img src="logo.png" alt="M62 WEB TV Logo" class="logo" decoding="async">
     <h1>M62 WEB TV NIGER</h1>
     <p id="headerTagline" data-i18n="headerTagline">La Voix Du Peuple | Muryar Jama'a 🇳🇪</p>
+
+    <div class="header-highlights" aria-label="Editorial focus">
+        <a href="#live">Live Desk</a>
+        <a href="#news">Breaking News</a>
+        <a href="#programs">Program Grid</a>
+        <a href="#contact">Global Contact</a>
+    </div>
+
     <div class="search-bar">
         <input type="text" id="homeSearchInput" data-i18n-placeholder="searchPlaceholder" placeholder="🔍 Nema labari ko bidiyo...">
         <button type="button" id="homeSearchButton" data-i18n="searchButton">Nema</button>
@@ -37,6 +51,18 @@
         </select>
     </div>
 </header>
+
+<section class="breaking-ticker" aria-label="Breaking news ticker">
+    <div class="ticker-label">BREAKING</div>
+    <div class="ticker-track-wrap" role="status" aria-live="polite">
+        <div class="ticker-track" id="breakingTickerTrackPrimary">
+            <span>Loading latest headlines...</span>
+        </div>
+        <div class="ticker-track" id="breakingTickerTrackSecondary" aria-hidden="true">
+            <span>Loading latest headlines...</span>
+        </div>
+    </div>
+</section>
 
 <nav class="navbar">
     <a href="#home" id="navHome" data-i18n="navHome">Home</a>
