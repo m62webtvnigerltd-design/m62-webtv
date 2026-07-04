@@ -45,3 +45,13 @@ Start-ScheduledTask -TaskName "M62-WebTV-Mongo-Backup"
 ```powershell
 mongorestore --uri="mongodb://127.0.0.1:27017" --gzip --archive="C:\path\to\mongodb_backup_YYYYMMDD_HHMMSS.gz"
 ```
+
+## 6) Final Backup Checklist (Launch Ready)
+
+- [ ] Manual backup command passes: `npm run backup:mongo`
+- [ ] New `.gz` archive appears in `backend/backups`
+- [ ] Daily scheduled task exists: `M62-WebTV-Mongo-Backup`
+- [ ] Scheduled task Last Run Result is successful (`0x0`)
+- [ ] At least one restore test completed successfully in non-production environment
+- [ ] Keep minimum 14 recent backup archives before deleting older files
+- [ ] Document latest successful backup timestamp in ops notes

@@ -2,12 +2,25 @@
 
 ## Current Status
 - Backend production API is live on Railway: https://m62-webtv-production.up.railway.app
-- Frontend production site is live on Netlify: https://6a476a2792dcce7220bbc6d1--celadon-sopapillas-d0a2ee.netlify.app/
+- Frontend production site is live on Cloudflare Workers/Pages: https://m62-webtv.m62webtvnigerltd.workers.dev/
 - Core production smoke checks pass:
   - `/api/health`
   - `/api/stats/dashboard`
-  - CORS preflight from `https://m62webtv.netlify.app`
+- CORS preflight from `https://m62-webtv.m62webtvnigerltd.workers.dev`
 - Frontend default API base now points to the Railway backend in `js/main.js`.
+
+## Launch Release Note (2026-07-04)
+- RELEASE: Production frontend migrated from Netlify to Cloudflare Workers/Pages due to Netlify team credit limits.
+- RELEASE: Homepage upgraded with international broadcast header style and live breaking ticker.
+- RELEASE: Breaking ticker now loads latest published headlines dynamically from backend with fallback messages.
+- RELEASE: Backend startup reliability improved by forcing `.env` load from `backend/.env` regardless of working directory.
+- RELEASE: CORS updated to allow Cloudflare production origin and verified with OPTIONS preflight.
+- RELEASE: End-to-end smoke checks completed for homepage, backend health/stats, CORS, and admin login flow.
+
+## Rollback Plan
+- Frontend rollback: redeploy previous Cloudflare version from Deployments history if UI regression appears.
+- Backend rollback: redeploy previous Railway deployment if auth/CORS regression appears.
+- Data safety rollback: restore latest verified MongoDB backup archive from `backend/backups` if data issue appears.
 
 ## What Was Completed
 - Day 1: audit and stabilization
