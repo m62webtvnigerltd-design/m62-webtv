@@ -827,6 +827,106 @@ body{
     font-weight:bold;
 }
 
+.official-youtube-section{
+    margin:30px auto 0;
+    max-width:1100px;
+    border:1px solid #d7e3f5;
+    border-radius:16px;
+    background:
+        linear-gradient(120deg, rgba(7,24,47,.98) 0%, rgba(11,46,87,.95) 56%, rgba(192,57,43,.93) 100%);
+    box-shadow:0 14px 34px rgba(9,30,66,.2);
+    overflow:hidden;
+}
+
+.official-youtube-layout{
+    display:grid;
+    grid-template-columns:minmax(260px, 1fr) minmax(320px, 1.4fr);
+    align-items:stretch;
+}
+
+.official-youtube-copy{
+    color:#edf3ff;
+    padding:20px;
+}
+
+.official-youtube-badge{
+    display:inline-block;
+    border-radius:999px;
+    padding:5px 10px;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.28);
+}
+
+.official-youtube-copy h3{
+    margin:10px 0 8px;
+    color:#ffffff;
+    font-size:28px;
+}
+
+.official-youtube-copy p{
+    margin:0;
+    color:#dce8fb;
+    line-height:1.55;
+}
+
+.official-youtube-meta{
+    margin-top:10px;
+    font-size:12px;
+    letter-spacing:.03em;
+    opacity:.95;
+}
+
+.official-youtube-actions{
+    margin-top:16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.official-youtube-actions a{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    border-radius:10px;
+    padding:9px 14px;
+    font-size:13px;
+    font-weight:800;
+    transition:transform .2s ease, box-shadow .2s ease;
+}
+
+.official-youtube-actions a:first-child{
+    background:#ffffff;
+    color:#10233f;
+}
+
+.official-youtube-actions a:last-child{
+    background:#e50914;
+    color:#ffffff;
+}
+
+.official-youtube-actions a:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 16px rgba(0,0,0,.25);
+}
+
+.official-youtube-player-wrap{
+    position:relative;
+    min-height:260px;
+    background:#000;
+}
+
+.official-youtube-player{
+    width:100%;
+    height:100%;
+    min-height:320px;
+    border:0;
+}
+
 /* FOOTER */
 footer{
     background:#0d1b2a;
@@ -912,6 +1012,18 @@ footer{
 
     .video-box iframe{
         height:300px;
+    }
+
+    .official-youtube-layout{
+        grid-template-columns:1fr;
+    }
+
+    .official-youtube-copy h3{
+        font-size:23px;
+    }
+
+    .official-youtube-player{
+        min-height:240px;
     }
     .search-bar{
         flex-direction:column;
