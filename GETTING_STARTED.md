@@ -4,6 +4,33 @@
 
 ---
 
+## ✅ PRE-DAY 3 CHECKLIST (MUST DO)
+
+- [ ] Set production-safe secrets in `backend/.env`:
+  - `JWT_SECRET` (32+ chars)
+  - `ADMIN_API_KEY` (strong random value)
+  - `MONGODB_URI` (real DB, not in-memory fallback)
+- [ ] Set `FRONTEND_ORIGIN` to your real frontend domain(s), not localhost.
+- [ ] Set `MONGODB_INMEMORY_FALLBACK=false` for production.
+- [ ] Confirm admin login works with JWT flow from admin pages.
+- [ ] Confirm draft protection:
+  - Public users can only see `published` news/videos.
+  - Admin/editor can access `draft` via authenticated requests.
+- [ ] Confirm `/api/test-email` is admin-only and rate-limited.
+- [ ] Upload test files and verify only allowed media extensions are served from `/uploads`.
+- [ ] Run smoke tests:
+  - Contact form submit
+  - News create/edit/delete
+  - Video create/edit/delete
+  - Engagement comments + moderation
+- [ ] Backup plan ready:
+  - Verify backup script runs at least once successfully.
+- [ ] Deployment dry run on staging or local production-like env.
+
+If all boxes above are checked, project is ready to proceed into Day 3 work.
+
+---
+
 ## 📋 STEP-BY-STEP SETUP
 
 ### PART 1: Run the Frontend (5 minutes)

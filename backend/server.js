@@ -31,6 +31,9 @@ const REQUEST_BODY_LIMIT_MB = Math.max(Number(process.env.REQUEST_BODY_LIMIT_MB 
 const TRUST_PROXY_HOPS = Math.max(Number(process.env.TRUST_PROXY_HOPS || 1), 0);
 const DATA_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const ALLOWED_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+const ALLOWED_VIDEO_EXTENSIONS = new Set(['.mp4', '.webm', '.ogg', '.mov', '.m4v']);
+const ALLOWED_UPLOAD_EXTENSIONS = new Set([...ALLOWED_IMAGE_EXTENSIONS, ...ALLOWED_VIDEO_EXTENSIONS]);
 const ENGAGEMENT_FILE = path.join(DATA_DIR, 'engagement.json');
 const STATS_FILE = path.join(DATA_DIR, 'app-stats.json');
 const BLOCKED_TERMS = ['spam', 'scam', 'fraud', 'casino', 'betting', 'porn'];
@@ -63,20 +66,49 @@ setInterval(() => {
 }, 5 * 60 * 1000).unref();
 
 function getClientIp(req) {
-    const forwarded = req.headers['x-forwarded-for'];
+    // Only trust proxy-derived IPs when trust proxy is explicitly enabled.
+    if (TRUST_PROXY_HOPS > 0) {
+        if (Array.isArray(req.ips) && req.ips.length > 0) {
+            return req.ips[0];
+        }
 
-    if (typeof forwarded === 'string' && forwarded.length > 0) {
-        return forwarded.split(',')[0].trim();
+        if (req.ip) {
+            return req.ip;
+        }
     }
 
-    return req.ip || req.socket.remoteAddress || 'unknown';
+    return req.socket.remoteAddress || req.ip || 'unknown';
+}
+
+function escapeRegexLiteral(value) {
+    return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function hasPrivilegedAccess(req) {
+    if (ADMIN_API_KEY && req.headers['x-admin-key'] === ADMIN_API_KEY) {
+        return true;
+    }
+
+    const authHeader = String(req.headers.authorization || '');
+    if (!authHeader.startsWith('Bearer ') || !JWT_SECRET) {
+        return false;
+    }
+
+    try {
+        const token = authHeader.slice('Bearer '.length).trim();
+        const payload = jwt.verify(token, JWT_SECRET);
+        const role = String(payload?.role || '').toLowerCase();
+        return role === 'admin' || role === 'editor';
+    } catch (error) {
+        return false;
+    }
 }
 
 function createRateLimiter(windowMs, maxRequests) {
     return (req, res, next) => {
         const ip = getClientIp(req);
         const now = Date.now();
-        const key = `${req.path}:${ip}`;
+        const key = `${req.method}:${req.path}:${ip}`;
         const existing = rateLimitStore.get(key);
 
         if (!existing || existing.expiresAt <= now) {
@@ -948,7 +980,17 @@ app.use(cors({
 app.use(bodyParser.json({ limit: `${REQUEST_BODY_LIMIT_MB}mb` }));
 app.use(bodyParser.urlencoded({ limit: `${REQUEST_BODY_LIMIT_MB}mb`, extended: true }));
 ensureUploadsDirectory();
-app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/uploads', (req, res, next) => {
+    const extension = path.extname(String(req.path || '')).toLowerCase();
+    if (!ALLOWED_UPLOAD_EXTENSIONS.has(extension)) {
+        return res.status(403).json({
+            success: false,
+            message: 'File type is not allowed for direct access'
+        });
+    }
+
+    return next();
+}, express.static(UPLOADS_DIR));
 
 const uploadStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -956,9 +998,9 @@ const uploadStorage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const extension = path.extname(file.originalname || '').toLowerCase();
-        const safeExtension = extension && extension.length <= 10 ? extension : '.jpg';
+        const safeExtension = ALLOWED_UPLOAD_EXTENSIONS.has(extension) ? extension : '';
         const unique = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        cb(null, `img_${unique}${safeExtension}`);
+        cb(null, `media_${unique}${safeExtension || '.bin'}`);
     }
 });
 
@@ -969,7 +1011,8 @@ const uploadImageMiddleware = multer({
     },
     fileFilter: (req, file, cb) => {
         const mimeType = String(file.mimetype || '').toLowerCase();
-        if (!mimeType.startsWith('image/')) {
+        const extension = path.extname(String(file.originalname || '')).toLowerCase();
+        if (!mimeType.startsWith('image/') || !ALLOWED_IMAGE_EXTENSIONS.has(extension)) {
             return cb(new Error('Only image files are allowed'));
         }
 
@@ -984,7 +1027,8 @@ const uploadVideoMiddleware = multer({
     },
     fileFilter: (req, file, cb) => {
         const mimeType = String(file.mimetype || '').toLowerCase();
-        if (!mimeType.startsWith('video/')) {
+        const extension = path.extname(String(file.originalname || '')).toLowerCase();
+        if (!mimeType.startsWith('video/') || !ALLOWED_VIDEO_EXTENSIONS.has(extension)) {
             return cb(new Error('Only video files are allowed'));
         }
 
@@ -1019,6 +1063,7 @@ async function sendMailWithTimeout(mailOptions, timeoutMs = MAIL_SEND_TIMEOUT_MS
 // Validation middleware
 function validateContactForm(req, res, next) {
     const { name, email, subject, message } = req.body;
+    const phone = validator.trim(String(req.body.phone || ''));
 
     // Check required fields
     if (!name || !email || !subject || !message) {
@@ -1041,6 +1086,7 @@ function validateContactForm(req, res, next) {
     req.body.email = validator.trim(validator.normalizeEmail(email));
     req.body.subject = validator.trim(validator.escape(subject));
     req.body.message = validator.trim(validator.escape(message));
+    req.body.phone = phone ? validator.escape(phone).slice(0, 30) : '';
 
     next();
 }
@@ -1162,11 +1208,19 @@ app.post('/api/stats/visit', createRateLimiter(60 * 1000, 30), (req, res) => {
 });
 
 // Test email endpoint
-app.post('/api/test-email', async (req, res) => {
+app.post('/api/test-email', requireAdminAccess, createRateLimiter(10 * 60 * 1000, 3), async (req, res) => {
     try {
+        const destination = validator.trim(String(req.body.email || process.env.EMAIL_USER || ''));
+        if (!destination || !validator.isEmail(destination)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Valid destination email is required'
+            });
+        }
+
         const testMailOptions = {
             from: process.env.EMAIL_USER,
-            to: req.body.email || process.env.EMAIL_USER,
+            to: destination,
             subject: 'M62 WEB TV - Test Email',
             html: '<h2>Test Email</h2><p>Server is working correctly!</p>'
         };
@@ -1453,9 +1507,10 @@ app.get('/api/auth/users', requireMongo, requireJwtAuth, requireRole(['admin']),
         const filter = {};
 
         if (q) {
+            const safeQuery = escapeRegexLiteral(q);
             filter.$or = [
-                { name: { $regex: q, $options: 'i' } },
-                { email: { $regex: q, $options: 'i' } }
+                { name: { $regex: safeQuery, $options: 'i' } },
+                { email: { $regex: safeQuery, $options: 'i' } }
             ];
         }
 
@@ -1668,20 +1723,31 @@ app.get('/api/news', requireMongo, async (req, res, next) => {
         const status = String(req.query.status || 'published').toLowerCase();
         const category = validator.trim(String(req.query.category || ''));
         const query = validator.trim(String(req.query.q || ''));
+        const canReadDraft = hasPrivilegedAccess(req);
+
+        if (status === 'draft' && !canReadDraft) {
+            return res.status(403).json({
+                success: false,
+                message: 'Draft access requires admin or editor permissions'
+            });
+        }
 
         const filter = { deletedAt: null };
         if (status === 'draft' || status === 'published') {
             filter.status = status;
+        } else {
+            filter.status = 'published';
         }
         if (category) {
             filter.category = category;
         }
         if (query) {
+            const safeQuery = escapeRegexLiteral(query);
             filter.$or = [
-                { title: { $regex: query, $options: 'i' } },
-                { summary: { $regex: query, $options: 'i' } },
-                { content: { $regex: query, $options: 'i' } },
-                { tags: { $regex: query, $options: 'i' } }
+                { title: { $regex: safeQuery, $options: 'i' } },
+                { summary: { $regex: safeQuery, $options: 'i' } },
+                { content: { $regex: safeQuery, $options: 'i' } },
+                { tags: { $regex: safeQuery, $options: 'i' } }
             ];
         }
 
@@ -1727,6 +1793,13 @@ app.get('/api/news/:idOrSlug', requireMongo, async (req, res, next) => {
         }
 
         if (!doc) {
+            return res.status(404).json({
+                success: false,
+                message: 'News not found'
+            });
+        }
+
+        if (doc.status !== 'published' && !hasPrivilegedAccess(req)) {
             return res.status(404).json({
                 success: false,
                 message: 'News not found'
@@ -1898,19 +1971,30 @@ app.get('/api/videos', requireMongo, async (req, res, next) => {
         const status = String(req.query.status || 'published').toLowerCase();
         const category = validator.trim(String(req.query.category || ''));
         const query = validator.trim(String(req.query.q || ''));
+        const canReadDraft = hasPrivilegedAccess(req);
+
+        if (status === 'draft' && !canReadDraft) {
+            return res.status(403).json({
+                success: false,
+                message: 'Draft access requires admin or editor permissions'
+            });
+        }
 
         const filter = { deletedAt: null };
         if (status === 'draft' || status === 'published') {
             filter.status = status;
+        } else {
+            filter.status = 'published';
         }
         if (category) {
             filter.category = category;
         }
         if (query) {
+            const safeQuery = escapeRegexLiteral(query);
             filter.$or = [
-                { title: { $regex: query, $options: 'i' } },
-                { description: { $regex: query, $options: 'i' } },
-                { category: { $regex: query, $options: 'i' } }
+                { title: { $regex: safeQuery, $options: 'i' } },
+                { description: { $regex: safeQuery, $options: 'i' } },
+                { category: { $regex: safeQuery, $options: 'i' } }
             ];
         }
 
