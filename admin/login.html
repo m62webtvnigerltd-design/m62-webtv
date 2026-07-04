@@ -64,6 +64,18 @@
 
     <p class="admin-muted" style="margin-top:12px;">Legacy mode still works with ADMIN_API_KEY in moderation page if needed.</p>
 </div>
+<script>
+// Local admin login should always talk to local backend without manual console commands.
+if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+    window.M62_API_BASE_URL = "http://localhost:3000";
+    try {
+        localStorage.setItem("m62ApiBaseUrl", "http://localhost:3000");
+        localStorage.setItem("m62UseLocalApi", "true");
+    } catch (error) {
+        // Ignore storage errors and continue with in-memory override.
+    }
+}
+</script>
 <script src="../js/main.js"></script>
 </body>
 </html>

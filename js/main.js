@@ -14,8 +14,13 @@ function resolveApiBaseUrl() {
     if (typeof window !== "undefined" && (window.location.protocol === "http:" || window.location.protocol === "https:")) {
         const host = window.location.hostname;
         if (host === "localhost" || host === "127.0.0.1") {
-            const forceLocalApi = localStorage.getItem("m62UseLocalApi") === "true";
-            return forceLocalApi ? "http://localhost:3000" : DEFAULT_PRODUCTION_API_BASE_URL;
+            const localPreference = String(localStorage.getItem("m62UseLocalApi") || "").toLowerCase();
+            if (localPreference === "false") {
+                return DEFAULT_PRODUCTION_API_BASE_URL;
+            }
+
+            // For local development, prefer local backend by default.
+            return "http://localhost:3000";
         }
 
         // In production, default to deployed backend API host.
