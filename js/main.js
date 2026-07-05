@@ -904,7 +904,7 @@ function redirectToAdminLogin(reason = "") {
         ? currentPath.replace(/[^/]+$/, "login.html")
         : "admin/login.html";
 
-    if (currentPath.endsWith("/login.html") || currentPath.endsWith("\\login.html") || currentPath.endsWith("login.html")) {
+    if (currentPath.endsWith("/login.html") || currentPath.endsWith("\\login.html") || currentPath.endsWith("login.html") || currentPath.endsWith("/login")) {
         return;
     }
 
@@ -2259,7 +2259,7 @@ function enforceAdminAccessOnLoad(options = {}) {
     }
 
     const path = String(window.location.pathname || "").toLowerCase();
-    if (path.endsWith("login.html")) {
+    if (path.endsWith("login.html") || path.endsWith("/login")) {
         return true;
     }
 
