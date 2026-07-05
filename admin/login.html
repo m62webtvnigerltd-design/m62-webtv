@@ -65,14 +65,23 @@
     <p class="admin-muted" style="margin-top:12px;">Legacy mode still works with ADMIN_API_KEY in moderation page if needed.</p>
 </div>
 <script>
-// Local admin login should always talk to local backend without manual console commands.
+// Local admin login: conditional localhost override for development.
+// By default, localhost/127.0.0.1 frontend uses production backend.
+// To use local backend, first set in console: localStorage.setItem("m62ForceLocalApi", "true")
 if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
-    window.M62_API_BASE_URL = "http://localhost:3000";
+    const forceLocal = String(localStorage.getItem("m62ForceLocalApi") || "").toLowerCase() === "true";
     try {
-        localStorage.setItem("m62ApiBaseUrl", "http://localhost:3000");
-        localStorage.setItem("m62UseLocalApi", "true");
+        if (forceLocal) {
+            // Use local backend when explicitly requested
+            window.M62_API_BASE_URL = "http://localhost:3000";
+            localStorage.setItem("m62ApiBaseUrl", "http://localhost:3000");
+            localStorage.setItem("m62UseLocalApi", "true");
+        } else {
+            // Default: use production backend even from localhost
+            localStorage.setItem("m62UseLocalApi", "false");
+        }
     } catch (error) {
-        // Ignore storage errors and continue with in-memory override.
+        // Ignore storage errors and continue.
     }
 }
 </script>
