@@ -91,10 +91,17 @@
 ---
 
 ### Phase 3D Step 2 — YouTube Facade / Click-to-Load
-**Status: ⏸ DEFERRED**
+**Status: ✅ COMPLETED**
+**Commit:** `162d36a` — `perf(youtube): add click-to-load facade for PDG embed`
 
-- Do not implement without explicit approval
-- Scope: add a static thumbnail facade that loads the iframe only on user click
+- Click-to-load YouTube facade implemented with static play button
+- No eager YouTube iframe on initial JavaScript-enabled page load
+- Exact youtube-nocookie.com playlist URL preserved (https://www.youtube-nocookie.com/embed?listType=playlist&list=UUNRk2oGaLi0pDF_0QgpJnRg)
+- Keyboard activation supported (Enter and Space keys)
+- Accessible facade div with role="button", tabindex="0", aria-label for screen readers
+- Duplicate iframe creation prevented via flag mechanism
+- No-JavaScript fallback preserved via noscript tag (original iframe restored for disabled JS)
+- Production verification passed — facade deployed live on Cloudflare production
 
 ---
 
@@ -148,6 +155,62 @@ Production baseline verified live on Cloudflare:
 
 ---
 
+## Legacy Homepage Cleanup
+**Status: ✅ COMPLETED**
+**Commit:** `581a777` — `chore(cleanup): remove obsolete index backup page`
+
+**Goal:** Remove obsolete historical backup file that posed duplicate content and public deployment risk.
+
+Completed tasks:
+- ✅ Audited index-backup.html (2,108 lines, created in Phase 3B era)
+- ✅ Verified no active dependencies in code, HTML links, API routes, or documentation
+- ✅ Identified public duplicate-content risk if indexed via search engines
+- ✅ Confirmed obsolete backup (predated youtube-nocookie.com switch, facade implementation, and SEO parity work)
+- ✅ Deleted obsolete backup file while preserving full git history for rollback
+- ✅ Verified deletion — only index.html (300 lines, current) remains
+
+---
+
+## Phase 5B — Search Engine Launch & Indexing
+**Status: ✅ COMPLETED (Verified Success)**
+
+**Goal:** Prepare M62 WEB TV for search engine discovery and establish baseline indexing status.
+
+**Completed Tasks:**
+
+**5B.1 — Google Search Console Verification**
+- ✅ HTML verification file (`googlecfcd629f5afbc7b7.html`) generated and deployed to project root
+- ✅ File preserved in git; Cloudflare deployment verified
+- ✅ Ownership claim submitted to Google Search Console
+- ✅ Commit: `38d998c` — `seo(search): add Google Search Console verification file`
+
+**5B.2 — Sitemap Cleanup and Optimization**
+- ✅ Duplicate homepage URL removed from sitemap.xml (/index.html entry deleted)
+- ✅ Canonical homepage URL (/) preserved with priority 1.0, daily changefreq
+- ✅ Sitemap now contains exactly 4 URLs: /, /about.html, /faq.html, /privacy.html
+- ✅ Valid XML format confirmed; xmlns namespace correct
+- ✅ Commit: `75c40dc` — `seo(sitemap): remove duplicate homepage URL`
+
+**5B.3 — Sitemap Submission and Indexing**
+- ✅ sitemap.xml successfully submitted to Google Search Console
+- ✅ Submission status: SUCCESS (Couldn't fetch state resolved after reload)
+- ✅ Homepage URL (/) inspected in GSC
+- ✅ Homepage indexed on Google — live and discoverable
+- ✅ HTTPS verified by Google Search Console — no TLS issues detected in GSC
+
+**Pending Tasks:**
+- ⏳ about.html: Discovered in GSC but not yet indexed; manual request indexing hit daily quota
+- ⏳ faq.html: Indexing status check and request indexing pending
+- ⏳ privacy.html: Indexing status check and request indexing pending
+- ⏳ Monitor GSC for discovery of secondary pages over next 2–4 weeks
+
+**Status Notes:**
+- Previous diagnosis of Content-Type misconfiguration (Cloudflare serving .xml as text/plain) was based on local TLS verification failures, not confirmed production issue. GSC sitemap submission now reports SUCCESS, indicating Cloudflare is serving sitemap correctly.
+- Local PowerShell TLS failures were environment-specific (network/firewall), not production HTTPS failure.
+- Production HTTPS confirmed working by Google Search Console verification and live Cloudflare deployment.
+
+---
+
 ## Phase 6 — Future Broadcast Foundation / Hybrid TV Station Readiness
 **Status: 🔮 FUTURE — DO NOT IMPLEMENT**
 
@@ -185,7 +248,6 @@ High-level areas (to be scoped when approved):
 |------|--------|
 | Phase 3C-2 CSS organisation | Low risk, low urgency — defer post-Phase 5 |
 | Phase 3C-3 Legacy CSS removal | Requires full audit — defer post-Phase 5 |
-| Phase 3D Step 2 YouTube facade | UX enhancement — defer to Phase 5 window |
 
 ---
 
