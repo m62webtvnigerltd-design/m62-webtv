@@ -4287,3 +4287,48 @@ window.addEventListener("load", initializeSettingsPage);
 window.addEventListener("load", initializeStatisticsPage);
 
 bindEngagementForms();
+// Phase 3D Step 2: YouTube Click-to-Load Facade
+(function initYouTubeFacade() {
+    const facade = document.getElementById('youtubeFacade');
+    if (!facade) return;
+
+    let iframeLoaded = false;
+
+    function createAndLoadIframe() {
+        if (iframeLoaded) return;
+        iframeLoaded = true;
+
+        const wrapper = document.getElementById('youtubePlayerWrap');
+        if (!wrapper) return;
+
+        const src = facade.getAttribute('data-src');
+        const title = facade.getAttribute('data-title');
+        const allow = facade.getAttribute('data-allow');
+        const referrerpolicy = facade.getAttribute('data-referrerpolicy');
+
+        if (!src) return;
+
+        const iframe = document.createElement('iframe');
+        iframe.className = 'official-youtube-player';
+        iframe.src = src;
+        iframe.title = title || 'PDG Multimedia TV Official YouTube Playlist';
+        iframe.allow = allow || 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.referrerPolicy = referrerpolicy || 'strict-origin-when-cross-origin';
+        iframe.setAttribute('allowfullscreen', '');
+
+        // Remove facade and append iframe
+        facade.parentNode.removeChild(facade);
+        wrapper.appendChild(iframe);
+    }
+
+    // Click handler
+    facade.addEventListener('click', createAndLoadIframe);
+
+    // Keyboard accessibility: Enter or Space
+    facade.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            createAndLoadIframe();
+        }
+    });
+})();
