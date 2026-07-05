@@ -8,7 +8,20 @@ function resolveApiBaseUrl() {
 
     const fromStorage = localStorage.getItem("m62ApiBaseUrl") || "";
     if (fromStorage) {
-        return String(fromStorage).replace(/\/+$/, "");
+        // Guard: only trust localStorage API URL if it is safe for current hostname.
+        // A localhost URL should never be used on a non-localhost origin (prevents stale dev cache).
+        const storedIsLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\b/i.test(fromStorage);
+        const currentIsLocal = typeof window !== "undefined" &&
+            (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+        
+        // Use stored value ONLY if:
+        // - It is NOT a localhost URL (safe for any origin), OR
+        // - It IS a localhost URL AND we ARE on localhost (correct context)
+        // If stored value IS localhost but we are NOT on localhost, fall through to hostname detection.
+        if (!storedIsLocal || currentIsLocal) {
+            return String(fromStorage).replace(/\/+$/, "");
+        }
+        // Stale localhost URL stored on non-localhost origin — ignore and fall through.
     }
 
     if (typeof window !== "undefined" && (window.location.protocol === "http:" || window.location.protocol === "https:")) {
