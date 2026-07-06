@@ -894,21 +894,51 @@ function isAdminPage() {
     return String(window.location.pathname || "").toLowerCase().includes("/admin/");
 }
 
+let adminRedirectInProgress = false;
+let adminLoginMessageStored = false;
+
+function normalizePathForAuthChecks(pathname = "") {
+    let normalized = String(pathname || "").toLowerCase().replace(/\\/g, "/");
+
+    if (!normalized.startsWith("/")) {
+        normalized = `/${normalized}`;
+    }
+
+    if (normalized.length > 1) {
+        normalized = normalized.replace(/\/+$/, "");
+    }
+
+    return normalized;
+}
+
+function isAdminLoginPath(pathname = "") {
+    const path = normalizePathForAuthChecks(pathname);
+
+    return path === "/login" ||
+        path === "/login.html" ||
+        path === "/admin/login" ||
+        path === "/admin/login.html";
+}
+
 function redirectToAdminLogin(reason = "") {
     if (typeof window === "undefined") {
         return;
     }
 
-    const currentPath = String(window.location.pathname || "").toLowerCase();
-    const loginPath = currentPath.includes("/admin/")
-        ? currentPath.replace(/[^/]+$/, "login.html")
-        : "admin/login.html";
+    const currentPath = String(window.location.pathname || "");
+    const normalizedPath = normalizePathForAuthChecks(currentPath);
+    const loginPath = normalizedPath.includes("/admin/")
+        ? normalizedPath.replace(/[^/]+$/, "login.html")
+        : "/admin/login.html";
 
-    if (currentPath.endsWith("/login.html") || currentPath.endsWith("\\login.html") || currentPath.endsWith("login.html") || currentPath.endsWith("/login")) {
+    if (adminRedirectInProgress || isAdminLoginPath(normalizedPath)) {
         return;
     }
 
-    if (reason) {
+    adminRedirectInProgress = true;
+
+    if (reason && !adminLoginMessageStored) {
+        adminLoginMessageStored = true;
         sessionStorage.setItem("m62AdminLoginMessage", reason);
     }
 
@@ -944,7 +974,7 @@ async function parseApiError(response, fallbackMessage) {
     const retryAfterSeconds = Number(payload.retryAfterSeconds || retryAfterHeader || 0);
     const message = payload.message || fallbackMessage;
 
-    if (isAdminPage() && (response.status === 401 || response.status === 403) && !String(window.location.pathname || "").toLowerCase().endsWith("login.html")) {
+    if (isAdminPage() && (response.status === 401 || response.status === 403) && !isAdminLoginPath(window.location.pathname || "")) {
         clearAdminAuthSession();
         redirectToAdminLogin("Your admin session expired. Please sign in again.");
     }
@@ -2258,8 +2288,8 @@ function enforceAdminAccessOnLoad(options = {}) {
         return true;
     }
 
-    const path = String(window.location.pathname || "").toLowerCase();
-    if (path.endsWith("login.html") || path.endsWith("/login")) {
+    const path = normalizePathForAuthChecks(window.location.pathname || "");
+    if (isAdminLoginPath(path)) {
         return true;
     }
 
@@ -3134,10 +3164,6 @@ function initializeNewsManagementPage() {
         return;
     }
 
-    if (!enforceAdminAccessOnLoad()) {
-        return;
-    }
-
     const cancelEditButton = document.getElementById("cancelNewsEditButton");
 
     if (refreshButton) {
@@ -3241,10 +3267,6 @@ function initializeVideosManagementPage() {
     const thumbnailUploadStatus = document.getElementById("videoThumbnailUploadStatus");
 
     if (!tableBody) {
-        return;
-    }
-
-    if (!enforceAdminAccessOnLoad()) {
         return;
     }
 
@@ -3373,10 +3395,6 @@ function initializeUsersManagementPage() {
     const newUserPassword = document.getElementById("newUserPassword");
 
     if (!tableBody) {
-        return;
-    }
-
-    if (!enforceAdminAccessOnLoad()) {
         return;
     }
 
@@ -3566,10 +3584,6 @@ function initializeSettingsPage() {
         return;
     }
 
-    if (!enforceAdminAccessOnLoad()) {
-        return;
-    }
-
     const inputIds = [
         "siteDisplayName",
         "siteTagline",
@@ -3719,10 +3733,6 @@ function initializeStatisticsPage() {
     const refreshButton = document.getElementById("refreshStatisticsBtn");
 
     if (!newsNode || !refreshButton) {
-        return;
-    }
-
-    if (!enforceAdminAccessOnLoad()) {
         return;
     }
 
