@@ -42,6 +42,9 @@ const passwordResetStore = new Map();
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = Math.max(Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30), 5);
 const PASSWORD_RESET_TOKEN_TTL_MS = PASSWORD_RESET_TOKEN_TTL_MINUTES * 60 * 1000;
 const MAIL_SEND_TIMEOUT_MS = Math.max(Number(process.env.MAIL_SEND_TIMEOUT_MS || 12000), 3000);
+const RESEND_API_KEY = String(process.env.RESEND_API_KEY || '').trim();
+const EMAIL_FROM = String(process.env.EMAIL_FROM || '').trim();
+const RESEND_EMAILS_API_URL = 'https://api.resend.com/emails';
 let mongoReady = false;
 let NewsModel = null;
 let UserModel = null;
@@ -1060,6 +1063,91 @@ async function sendMailWithTimeout(mailOptions, timeoutMs = MAIL_SEND_TIMEOUT_MS
     ]);
 }
 
+function getSanitizedMailErrorCode(error) {
+    const code = String(error?.code || '').trim();
+
+    if (code) {
+        return code;
+    }
+
+    const status = Number(error?.status || 0);
+    if (status > 0) {
+        return `MAIL_HTTP_${status}`;
+    }
+
+    return 'EMAIL_DELIVERY_FAILED';
+}
+
+async function sendPasswordResetEmail({ to, token, resetUrl, expiresInMinutes }) {
+    const subject = 'M62 WEB TV Admin Password Reset';
+    const html = `
+        <h2>Password Reset Request</h2>
+        <p>Someone requested to reset your M62 WEB TV admin password.</p>
+        <p>This token expires in ${expiresInMinutes} minutes.</p>
+        <p><strong>Reset token:</strong> ${token}</p>
+        <p><strong>Reset link:</strong> <a href="${resetUrl}">${resetUrl}</a></p>
+        <p>If you did not request this, you can ignore this message.</p>
+    `;
+
+    // Production: prefer Resend HTTPS API when key exists.
+    if (IS_PRODUCTION && RESEND_API_KEY) {
+        if (!EMAIL_FROM) {
+            const error = new Error('EMAIL_FROM is required for production password reset delivery');
+            error.code = 'EMAIL_FROM_MISSING';
+            throw error;
+        }
+
+        const controller = new AbortController();
+        const timeoutHandle = setTimeout(() => controller.abort(), MAIL_SEND_TIMEOUT_MS);
+
+        try {
+            const response = await fetch(RESEND_EMAILS_API_URL, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${RESEND_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    from: EMAIL_FROM,
+                    to: [to],
+                    subject,
+                    html
+                }),
+                signal: controller.signal
+            });
+
+            if (!response.ok) {
+                const error = new Error(`Resend API failed with status ${response.status}`);
+                error.code = 'RESEND_API_ERROR';
+                error.status = response.status;
+                throw error;
+            }
+
+            return;
+        } catch (error) {
+            if (error?.name === 'AbortError') {
+                const timeoutError = new Error(`Resend API timed out after ${MAIL_SEND_TIMEOUT_MS}ms`);
+                timeoutError.code = 'EMAIL_TIMEOUT';
+                throw timeoutError;
+            }
+
+            throw error;
+        } finally {
+            clearTimeout(timeoutHandle);
+        }
+    }
+
+    // Non-production only: keep existing SMTP fallback.
+    if (!IS_PRODUCTION && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+        await sendMailWithTimeout({
+            from: process.env.EMAIL_USER,
+            to,
+            subject,
+            html
+        });
+    }
+}
+
 // Validation middleware
 function validateContactForm(req, res, next) {
     const { name, email, subject, message } = req.body;
@@ -1382,25 +1470,15 @@ app.post('/api/auth/password-reset/request', createRateLimiter(10 * 60 * 1000, 6
             token = issuePasswordResetToken(email);
             resetUrl = String(process.env.ADMIN_RESET_URL || `${req.protocol}://${req.get('host')}/admin/login.html#reset-token=${token}`);
 
-            if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-                const mailOptions = {
-                    from: process.env.EMAIL_USER,
-                    to: email,
-                    subject: 'M62 WEB TV Admin Password Reset',
-                    html: `
-                        <h2>Password Reset Request</h2>
-                        <p>Someone requested to reset your M62 WEB TV admin password.</p>
-                        <p>This token expires in ${PASSWORD_RESET_TOKEN_TTL_MINUTES} minutes.</p>
-                        <p><strong>Reset token:</strong> ${token}</p>
-                        <p><strong>Reset link:</strong> <a href="${resetUrl}">${resetUrl}</a></p>
-                        <p>If you did not request this, you can ignore this message.</p>
-                    `
-                };
-
-                sendMailWithTimeout(mailOptions).catch((mailError) => {
-                    console.warn('Password reset mail failed:', mailError.message);
-                });
-            }
+            sendPasswordResetEmail({
+                to: email,
+                token,
+                resetUrl,
+                expiresInMinutes: PASSWORD_RESET_TOKEN_TTL_MINUTES
+            }).catch((mailError) => {
+                const reasonCode = getSanitizedMailErrorCode(mailError);
+                console.warn('Password reset mail failed:', reasonCode);
+            });
         }
 
         const responsePayload = {
