@@ -195,6 +195,52 @@ function ensureUploadsDirectory() {
     }
 }
 
+function createLocalLegacyStorageAdapter() {
+    return {
+        ensureReady() {
+            ensureUploadsDirectory();
+        },
+        getPublicMountPath() {
+            return '/uploads';
+        },
+        createPublicReadGuard() {
+            return (req, res, next) => {
+                const extension = path.extname(String(req.path || '')).toLowerCase();
+                if (!ALLOWED_UPLOAD_EXTENSIONS.has(extension)) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'File type is not allowed for direct access'
+                    });
+                }
+
+                return next();
+            };
+        },
+        createStaticMiddleware() {
+            return express.static(UPLOADS_DIR);
+        },
+        createMulterStorage() {
+            return multer.diskStorage({
+                destination: (req, file, cb) => {
+                    cb(null, UPLOADS_DIR);
+                },
+                filename: (req, file, cb) => {
+                    const extension = path.extname(file.originalname || '').toLowerCase();
+                    const safeExtension = ALLOWED_UPLOAD_EXTENSIONS.has(extension) ? extension : '';
+                    const unique = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                    cb(null, `media_${unique}${safeExtension || '.bin'}`);
+                }
+            });
+        },
+        buildRelativeUrl(fileName) {
+            return `/uploads/${fileName}`;
+        },
+        buildAbsoluteUrl(req, relativeUrl) {
+            return `${req.protocol}://${req.get('host')}${relativeUrl}`;
+        }
+    };
+}
+
 function ensureDataDirectory() {
     if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -982,30 +1028,15 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: `${REQUEST_BODY_LIMIT_MB}mb` }));
 app.use(bodyParser.urlencoded({ limit: `${REQUEST_BODY_LIMIT_MB}mb`, extended: true }));
-ensureUploadsDirectory();
-app.use('/uploads', (req, res, next) => {
-    const extension = path.extname(String(req.path || '')).toLowerCase();
-    if (!ALLOWED_UPLOAD_EXTENSIONS.has(extension)) {
-        return res.status(403).json({
-            success: false,
-            message: 'File type is not allowed for direct access'
-        });
-    }
+const storageAdapter = createLocalLegacyStorageAdapter();
+storageAdapter.ensureReady();
+app.use(
+    storageAdapter.getPublicMountPath(),
+    storageAdapter.createPublicReadGuard(),
+    storageAdapter.createStaticMiddleware()
+);
 
-    return next();
-}, express.static(UPLOADS_DIR));
-
-const uploadStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, UPLOADS_DIR);
-    },
-    filename: (req, file, cb) => {
-        const extension = path.extname(file.originalname || '').toLowerCase();
-        const safeExtension = ALLOWED_UPLOAD_EXTENSIONS.has(extension) ? extension : '';
-        const unique = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        cb(null, `media_${unique}${safeExtension || '.bin'}`);
-    }
-});
+const uploadStorage = storageAdapter.createMulterStorage();
 
 const uploadImageMiddleware = multer({
     storage: uploadStorage,
@@ -1345,8 +1376,8 @@ app.post('/api/uploads/image', requireAdminAccess, (req, res, next) => {
             });
         }
 
-        const relativeUrl = `/uploads/${req.file.filename}`;
-        const absoluteUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+        const relativeUrl = storageAdapter.buildRelativeUrl(req.file.filename);
+        const absoluteUrl = storageAdapter.buildAbsoluteUrl(req, relativeUrl);
 
         res.status(201).json({
             success: true,
@@ -1385,8 +1416,8 @@ app.post('/api/uploads/video', requireAdminAccess, (req, res, next) => {
             });
         }
 
-        const relativeUrl = `/uploads/${req.file.filename}`;
-        const absoluteUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+        const relativeUrl = storageAdapter.buildRelativeUrl(req.file.filename);
+        const absoluteUrl = storageAdapter.buildAbsoluteUrl(req, relativeUrl);
 
         res.status(201).json({
             success: true,
