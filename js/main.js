@@ -1335,6 +1335,150 @@ function normalizeLegacyVideoItem(item, index) {
     };
 }
 
+const DIRECT_VIDEO_EXTENSIONS = new Set([".mp4", ".webm", ".mov", ".m4v", ".ogg"]);
+
+function parseSafeUrl(value) {
+    const rawValue = String(value || "").trim();
+
+    if (!rawValue) {
+        return null;
+    }
+
+    try {
+        const parsedUrl = new URL(rawValue, window.location.origin);
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+            return null;
+        }
+
+        return parsedUrl;
+    } catch (error) {
+        return null;
+    }
+}
+
+function isYouTubeUrl(value) {
+    return Boolean(extractYouTubeEmbedInfo(value));
+}
+
+function extractYouTubeEmbedInfo(value) {
+    const url = parseSafeUrl(value);
+
+    if (!url) {
+        return null;
+    }
+
+    const host = url.hostname.toLowerCase();
+    const path = String(url.pathname || "").toLowerCase();
+    const videoIdFromQuery = url.searchParams.get("v") || url.searchParams.get("video_id") || "";
+    const listIdFromQuery = url.searchParams.get("list") || "";
+
+    const isYouTubeHost = host === "youtu.be" || host.endsWith(".youtu.be") ||
+        host === "youtube.com" || host.endsWith(".youtube.com") ||
+        host === "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com");
+
+    if (!isYouTubeHost) {
+        return null;
+    }
+
+    if (listIdFromQuery || path.includes("/playlist") || path.includes("/videoseries")) {
+        return {
+            type: "playlist",
+            playlistId: listIdFromQuery || null
+        };
+    }
+
+    let videoId = videoIdFromQuery;
+
+    if (!videoId && host === "youtu.be") {
+        videoId = path.split("/").filter(Boolean)[0] || "";
+    }
+
+    if (!videoId && path.startsWith("/embed/")) {
+        videoId = path.split("/").filter(Boolean)[1] || "";
+    }
+
+    if (!videoId && path.startsWith("/shorts/")) {
+        videoId = path.split("/").filter(Boolean)[1] || "";
+    }
+
+    if (!videoId) {
+        return null;
+    }
+
+    return {
+        type: "video",
+        videoId
+    };
+}
+
+function buildYouTubeEmbedUrl(value) {
+    const info = typeof value === "string" ? extractYouTubeEmbedInfo(value) : value;
+
+    if (!info) {
+        return "";
+    }
+
+    if (info.type === "playlist") {
+        if (!info.playlistId) {
+            return "";
+        }
+
+        return `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(info.playlistId)}`;
+    }
+
+    if (!info.videoId) {
+        return "";
+    }
+
+    return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(info.videoId)}`;
+}
+
+function isDirectVideoUrl(value) {
+    const url = parseSafeUrl(value);
+
+    if (!url) {
+        return false;
+    }
+
+    const pathname = String(url.pathname || "").toLowerCase();
+    return Array.from(DIRECT_VIDEO_EXTENSIONS).some((extension) => pathname.endsWith(extension));
+}
+
+function renderVideoMedia(video) {
+    const rawVideoUrl = String(video?.videoUrl || "").trim();
+
+    if (!rawVideoUrl) {
+        return `<div class="video-media-placeholder"><p>${escapeHtml(tr("noVideosYet"))}</p></div>`;
+    }
+
+    const safeUrl = parseSafeUrl(rawVideoUrl);
+
+    if (!safeUrl) {
+        return `<div class="video-media-placeholder"><p>${escapeHtml(tr("noVideosYet"))}</p></div>`;
+    }
+
+    if (isDirectVideoUrl(safeUrl.href)) {
+        return `<video controls playsinline preload="metadata" style="width:100%;max-height:240px;" src="${escapeHtml(safeUrl.href)}"></video>`;
+    }
+
+    const youtubeEmbedUrl = buildYouTubeEmbedUrl(rawVideoUrl);
+    if (youtubeEmbedUrl) {
+        const title = String(video?.title || "Video player");
+        return `
+<iframe
+    class="official-youtube-player"
+    src="${escapeHtml(youtubeEmbedUrl)}"
+    title="${escapeHtml(title)}"
+    loading="lazy"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen>
+</iframe>`;
+    }
+
+    return `<div class="video-media-placeholder"><p>${escapeHtml(tr("watchVideo"))}</p></div>`;
+}
+
 async function fetchVideosList(options = {}) {
     const {
         status = "published",
@@ -2151,9 +2295,7 @@ async function renderHomeVideos() {
     ${video.thumbnailUrl ? `<img class="news-cover" loading="lazy" decoding="async" fetchpriority="low" style="aspect-ratio:16/9;" src="${escapeHtml(video.thumbnailUrl)}" alt="${escapeHtml(video.title)}">` : ""}
     <h3>${escapeHtml(video.title)}</h3>
     <p>${escapeHtml(video.description || "")}</p>
-    ${(video.videoUrl && video.videoUrl.includes('/uploads/') && !DATA_SAVER_ENABLED)
-        ? `<video controls style="width:100%;max-height:240px;" src="${escapeHtml(video.videoUrl)}"></video>`
-        : `<p><a href="${escapeHtml(video.videoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(tr("watchVideo"))}</a></p>`}
+    ${renderVideoMedia(video)}
     ${DATA_SAVER_ENABLED ? "" : renderEngagementWidget("video", video.id || `video_${index + 1}`)}
 </article>
 `).join("");
