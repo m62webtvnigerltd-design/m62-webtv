@@ -332,6 +332,17 @@
 </footer>
 
 <script src="js/main.js?v=20260706-auth1" defer></script>
+<script>
+window.addEventListener("load", function () {
+    if (!("serviceWorker" in navigator)) {
+        return;
+    }
+
+    navigator.serviceWorker.register("/service-worker.js").catch(function () {
+        // Silent fail: registration issues should not block the public page.
+    });
+});
+</script>
 
 </body>
 </html>
