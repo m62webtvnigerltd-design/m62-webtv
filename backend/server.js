@@ -25,6 +25,7 @@ const JWT_SECRET = String(process.env.JWT_SECRET || '').trim();
 const JWT_EXPIRES_IN = String(process.env.JWT_EXPIRES_IN || '7d').trim();
 const ADMIN_BOOTSTRAP_EMAIL = String(process.env.ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
 const ADMIN_BOOTSTRAP_PASSWORD = String(process.env.ADMIN_BOOTSTRAP_PASSWORD || '').trim();
+const MEDIA_STORAGE_PROVIDER = String(process.env.MEDIA_STORAGE_PROVIDER || 'local').trim().toLowerCase();
 const UPLOAD_MAX_MB = Math.max(Number(process.env.UPLOAD_MAX_MB || 10), 1);
 const VIDEO_UPLOAD_MAX_MB = Math.max(Number(process.env.VIDEO_UPLOAD_MAX_MB || 200), 10);
 const REQUEST_BODY_LIMIT_MB = Math.max(Number(process.env.REQUEST_BODY_LIMIT_MB || (IS_PRODUCTION ? 2 : 10)), 1);
@@ -238,6 +239,34 @@ function createLocalLegacyStorageAdapter() {
         buildAbsoluteUrl(req, relativeUrl) {
             return `${req.protocol}://${req.get('host')}${relativeUrl}`;
         }
+    };
+}
+
+function resolveStorageAdapter() {
+    const localAdapter = createLocalLegacyStorageAdapter();
+
+    if (!MEDIA_STORAGE_PROVIDER || MEDIA_STORAGE_PROVIDER === 'local') {
+        return {
+            adapter: localAdapter,
+            provider: 'local',
+            status: 'active'
+        };
+    }
+
+    if (MEDIA_STORAGE_PROVIDER === 'r2') {
+        return {
+            adapter: localAdapter,
+            provider: 'r2',
+            status: 'not-configured',
+            message: 'MEDIA_STORAGE_PROVIDER=r2 is recognized but R2 is not enabled yet; using local storage.'
+        };
+    }
+
+    return {
+        adapter: localAdapter,
+        provider: MEDIA_STORAGE_PROVIDER,
+        status: 'unsupported',
+        message: `Unsupported MEDIA_STORAGE_PROVIDER value: ${MEDIA_STORAGE_PROVIDER}; using local storage.`
     };
 }
 
@@ -1028,7 +1057,15 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: `${REQUEST_BODY_LIMIT_MB}mb` }));
 app.use(bodyParser.urlencoded({ limit: `${REQUEST_BODY_LIMIT_MB}mb`, extended: true }));
-const storageAdapter = createLocalLegacyStorageAdapter();
+const storageProviderSelection = resolveStorageAdapter();
+const storageAdapter = storageProviderSelection.adapter;
+
+if (storageProviderSelection.message) {
+    console.warn(storageProviderSelection.message);
+} else {
+    console.log(`Storage provider active: ${storageProviderSelection.provider}`);
+}
+
 storageAdapter.ensureReady();
 app.use(
     storageAdapter.getPublicMountPath(),
