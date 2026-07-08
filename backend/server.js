@@ -243,6 +243,103 @@ function createLocalLegacyStorageAdapter() {
     };
 }
 
+function getUploadCreatedByOrActorId(req) {
+    const authUser = req?.authUser || {};
+    const actorId = String(authUser.sub || authUser.email || 'unknown').trim();
+    return actorId || 'unknown';
+}
+
+function buildSharedMediaAssetRecordFromUpload({ req, file, relativeUrl, absoluteUrl, mediaType }) {
+    const actorId = getUploadCreatedByOrActorId(req);
+
+    return {
+        ownerType: '',
+        ownerId: '',
+        storageProvider: 'local',
+        objectKey: String(file?.filename || '').trim(),
+        deliveryUrl: String(absoluteUrl || '').trim(),
+        originalFilename: String(file?.originalname || '').trim(),
+        mimeType: String(file?.mimetype || '').trim(),
+        sizeBytes: Number(file?.size || 0),
+        mediaType: String(mediaType || '').trim().toLowerCase(),
+        healthStatus: 'unknown',
+        migrationStatus: 'not_required',
+        createdBy: actorId,
+        deletedAt: null,
+        relativeUrl: String(relativeUrl || '').trim()
+    };
+}
+
+async function recordUploadedMediaAssetBestEffort(payload) {
+    if (!mongoReady || !SharedMediaAssetModel) {
+        return { success: false, skipped: true, reason: 'mongo_unavailable' };
+    }
+
+    const storageProvider = String(payload?.storageProvider || '').trim().toLowerCase();
+    const objectKey = String(payload?.objectKey || '').trim();
+
+    if (!storageProvider || !objectKey) {
+        console.warn('Media registry skipped: missing storageProvider or objectKey', {
+            storageProvider,
+            objectKey,
+            mediaType: String(payload?.mediaType || '').trim().toLowerCase()
+        });
+        return { success: false, skipped: true, reason: 'missing_identity' };
+    }
+
+    const query = { storageProvider, objectKey };
+    const update = {
+        $setOnInsert: {
+            ownerType: String(payload?.ownerType || '').trim(),
+            ownerId: String(payload?.ownerId || '').trim(),
+            storageProvider,
+            objectKey,
+            originalFilename: String(payload?.originalFilename || '').trim(),
+            mimeType: String(payload?.mimeType || '').trim(),
+            sizeBytes: Number(payload?.sizeBytes || 0),
+            mediaType: String(payload?.mediaType || '').trim().toLowerCase(),
+            healthStatus: 'unknown',
+            migrationStatus: 'not_required',
+            createdBy: String(payload?.createdBy || 'unknown').trim(),
+            deletedAt: null
+        },
+        $set: {
+            deliveryUrl: String(payload?.deliveryUrl || '').trim(),
+            healthStatus: 'unknown',
+            migrationStatus: 'not_required',
+            deletedAt: null
+        }
+    };
+
+    try {
+        const result = await SharedMediaAssetModel.updateOne(query, update, { upsert: true });
+
+        return {
+            success: true,
+            upserted: Boolean(result?.upsertedCount)
+        };
+    } catch (error) {
+        const code = String(error?.code || '');
+        if (code === '11000' || code === 'E11000') {
+            console.warn('Media registry duplicate key ignored', {
+                storageProvider,
+                objectKey,
+                mediaType: String(payload?.mediaType || '').trim().toLowerCase()
+            });
+            return { success: false, duplicate: true, skipped: true, reason: 'duplicate_key' };
+        }
+
+        console.warn('Media registry write failed', {
+            storageProvider,
+            objectKey,
+            mediaType: String(payload?.mediaType || '').trim().toLowerCase(),
+            errorCode: code || 'UNKNOWN_ERROR',
+            errorMessage: String(error?.message || 'Unknown registry error')
+        });
+        return { success: false, error: true, reason: 'write_failed' };
+    }
+}
+
 function resolveStorageAdapter() {
     const localAdapter = createLocalLegacyStorageAdapter();
 
@@ -1459,6 +1556,16 @@ app.post('/api/uploads/image', requireAdminAccess, (req, res, next) => {
         const relativeUrl = storageAdapter.buildRelativeUrl(req.file.filename);
         const absoluteUrl = storageAdapter.buildAbsoluteUrl(req, relativeUrl);
 
+        void recordUploadedMediaAssetBestEffort(
+            buildSharedMediaAssetRecordFromUpload({
+                req,
+                file: req.file,
+                relativeUrl,
+                absoluteUrl,
+                mediaType: 'image'
+            })
+        );
+
         res.status(201).json({
             success: true,
             message: 'Image uploaded successfully',
@@ -1498,6 +1605,16 @@ app.post('/api/uploads/video', requireAdminAccess, (req, res, next) => {
 
         const relativeUrl = storageAdapter.buildRelativeUrl(req.file.filename);
         const absoluteUrl = storageAdapter.buildAbsoluteUrl(req, relativeUrl);
+
+        void recordUploadedMediaAssetBestEffort(
+            buildSharedMediaAssetRecordFromUpload({
+                req,
+                file: req.file,
+                relativeUrl,
+                absoluteUrl,
+                mediaType: 'video'
+            })
+        );
 
         res.status(201).json({
             success: true,
