@@ -294,10 +294,6 @@ async function recordUploadedMediaAssetBestEffort(payload) {
             ownerId: String(payload?.ownerId || '').trim(),
             storageProvider,
             objectKey,
-            originalFilename: String(payload?.originalFilename || '').trim(),
-            mimeType: String(payload?.mimeType || '').trim(),
-            sizeBytes: Number(payload?.sizeBytes || 0),
-            mediaType: String(payload?.mediaType || '').trim().toLowerCase(),
             healthStatus: 'unknown',
             migrationStatus: 'not_required',
             createdBy: String(payload?.createdBy || 'unknown').trim(),
@@ -305,9 +301,10 @@ async function recordUploadedMediaAssetBestEffort(payload) {
         },
         $set: {
             deliveryUrl: String(payload?.deliveryUrl || '').trim(),
-            healthStatus: 'unknown',
-            migrationStatus: 'not_required',
-            deletedAt: null
+            originalFilename: String(payload?.originalFilename || '').trim(),
+            mimeType: String(payload?.mimeType || '').trim(),
+            sizeBytes: Number(payload?.sizeBytes || 0),
+            mediaType: String(payload?.mediaType || '').trim().toLowerCase()
         }
     };
 
