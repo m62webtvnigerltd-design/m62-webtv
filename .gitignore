@@ -17,3 +17,10 @@ backend/data/*.csv
 backend/data/engagement.json
 backend/data/app-stats.json
 backend/backups/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
