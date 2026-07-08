@@ -50,6 +50,7 @@ let mongoReady = false;
 let NewsModel = null;
 let UserModel = null;
 let VideoModel = null;
+let SharedMediaAssetModel = null;
 let mongoMemoryServer = null;
 
 // Prevent unbounded memory growth in in-memory rate-limit buckets.
@@ -657,9 +658,51 @@ function initMongoModels() {
     videoSchema.index({ status: 1, deletedAt: 1, publishedAt: -1, createdAt: -1 });
     videoSchema.index({ category: 1, deletedAt: 1, createdAt: -1 });
 
+    const sharedMediaAssetSchema = new mongoose.Schema({
+        ownerType: { type: String, default: '' },
+        ownerId: { type: String, default: '' },
+        storageProvider: { type: String, required: true, default: 'local', trim: true, lowercase: true },
+        objectKey: { type: String, required: true, trim: true },
+        deliveryUrl: { type: String, required: true, trim: true },
+        originalFilename: { type: String, required: true, trim: true },
+        mimeType: { type: String, required: true, trim: true },
+        sizeBytes: { type: Number, required: true, min: 0 },
+        mediaType: { type: String, required: true, trim: true, lowercase: true },
+        healthStatus: { type: String, default: 'unknown', trim: true, lowercase: true },
+        migrationStatus: { type: String, default: 'not_required', trim: true, lowercase: true },
+        createdBy: { type: String, default: 'admin' },
+        deletedAt: { type: Date, default: null }
+    }, {
+        timestamps: true
+    });
+
+    sharedMediaAssetSchema.index(
+        { storageProvider: 1, objectKey: 1 },
+        {
+            unique: true,
+            partialFilterExpression: {
+                storageProvider: { $type: 'string' },
+                objectKey: { $type: 'string' }
+            }
+        }
+    );
+    sharedMediaAssetSchema.index({ ownerType: 1, ownerId: 1, deletedAt: 1, createdAt: -1 });
+    sharedMediaAssetSchema.index({ healthStatus: 1, deletedAt: 1, updatedAt: -1 });
+    sharedMediaAssetSchema.index({ migrationStatus: 1, deletedAt: 1, createdAt: -1 });
+    sharedMediaAssetSchema.index(
+        { deliveryUrl: 1 },
+        {
+            sparse: true,
+            partialFilterExpression: {
+                deliveryUrl: { $type: 'string' }
+            }
+        }
+    );
+
     UserModel = mongoose.models.User || mongoose.model('User', userSchema);
     NewsModel = mongoose.models.News || mongoose.model('News', newsSchema);
     VideoModel = mongoose.models.Video || mongoose.model('Video', videoSchema);
+    SharedMediaAssetModel = mongoose.models.SharedMediaAsset || mongoose.model('SharedMediaAsset', sharedMediaAssetSchema);
 }
 
 async function connectMongoIfConfigured() {
